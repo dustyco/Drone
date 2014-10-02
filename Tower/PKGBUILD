@@ -4,7 +4,7 @@ _pkgname=drone-tower
 _subdir=Tower
 _binary=DroneTower
 
-_servicefile=$_servicefile.service
+_servicefile=$_binary.service
 _giturl=https://github.com/dustyco/Drone.git
 
 pkgname=$_pkgname-git
