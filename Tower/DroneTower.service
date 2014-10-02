@@ -1,0 +1,10 @@
+[Unit]
+Description=Drone discovery server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/DroneTower
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
