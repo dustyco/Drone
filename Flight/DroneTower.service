@@ -1,0 +1,10 @@
+[Unit]
+Description=Drone onboard flight runtime
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/DroneFlight
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

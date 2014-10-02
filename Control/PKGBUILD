@@ -1,0 +1,40 @@
+
+
+_pkgname=drone-control
+_subdir=Control
+_binary=DroneControl
+
+_giturl=https://github.com/dustyco/Drone.git
+
+pkgname=$_pkgname-git
+pkgver=1
+pkgrel=1
+pkgdesc=""
+arch=('i686' 'x86_64')
+url="https://github.com/dustyco/Drone"
+license=('')
+depends=('qt5-base')
+makedepends=('git')
+provides=("$_pkgname")
+conflicts=('$_pkgname')
+source=("$_pkgname::git+$_giturl")
+md5sums=('SKIP')
+
+
+pkgver() {
+  cd "$srcdir/$_pkgname"
+  git describe --tags | sed 's|-|.|g'
+}
+
+build() {
+  cd "$srcdir/$_pkgname/$_subdir"
+  qmake .
+  make -j2
+}
+
+package() {
+  cd "$srcdir/$_pkgname/$_subdir"
+#  make install PREFIX="$pkgdir/usr" SYSCONFDIR="$pkgdir/etc/local/$_pkgname"
+
+  install -Dm755 "$srcdir/$_pkgname/$_subdir/$_binary" "$pkgdir/usr/bin/$_binary"
+}
