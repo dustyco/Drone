@@ -12,7 +12,7 @@ pkgdesc=""
 arch=('i686' 'x86_64')
 url="https://github.com/dustyco/Drone"
 license=('')
-depends=('qt5')
+depends=('qt5-base')
 makedepends=('git')
 provides=("$_pkgname")
 conflicts=('$_pkgname')
@@ -28,7 +28,7 @@ pkgver() {
 build() {
   cd "$srcdir/$_pkgname/$_subdir"
   qmake .
-  make build
+  make -j2
 }
 
 package() {
