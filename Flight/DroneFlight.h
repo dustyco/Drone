@@ -38,7 +38,7 @@ public:
         connect(mDiscover, &Discover::sendDatagram, this, &DroneFlight::sendDatagram);
         connect(mDiscover, &Discover::towerChanged, this, &DroneFlight::towerChanged);
         connect(mDiscover, &Discover::peerChanged, this, &DroneFlight::peerChanged);
-        mDiscover->start("Flight", 1, "localhost", 28050);
+        mDiscover->start("Flight", 1, "76.14.55.211", 28050);
     }
 
 signals:

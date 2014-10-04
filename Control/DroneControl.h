@@ -37,7 +37,7 @@ public:
         connect(mDiscover, &Discover::sendDatagram, this, &DroneControl::sendDatagram);
         connect(mDiscover, &Discover::towerChanged, this, &DroneControl::towerChanged);
         connect(mDiscover, &Discover::peerChanged, this, &DroneControl::peerChanged);
-        mDiscover->start("Control", 1, "localhost", 28050);
+        mDiscover->start("Control", 1, "76.14.55.211", 28050);
     }
 
     long traffic () const { return mTraffic; }
