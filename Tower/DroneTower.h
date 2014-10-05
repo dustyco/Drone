@@ -12,6 +12,7 @@
 #include <map>
 #include "../Shared/Messages.h"
 #include "../Shared/Discover.h"
+#include "../Shared/Config.h"
 
 class DroneTower : public QObject
 {
@@ -33,8 +34,12 @@ class DroneTower : public QObject
 public:
     explicit DroneTower (QObject *parent = 0)
     {
+        // Load the configuration
+        Config& config = Config::getSingleton();
+        config.prefix = "Tower/";
+        quint16 port = config.value("Port").toInt();
+
         // Set up network socket
-        quint16 port = 28050;
         mSocket = new QUdpSocket(this);
         connect(mSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
         if (not mSocket->bind(QHostAddress::Any, port))

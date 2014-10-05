@@ -7,6 +7,7 @@
 #include <iostream>
 #include <../Shared/Discover.h>
 #include <../Shared/Messages.h>
+#include <../Shared/Config.h>
 
 class DroneControl : public QObject
 {
@@ -18,12 +19,16 @@ class DroneControl : public QObject
 public:
     explicit DroneControl (QObject *parent = 0)
     {
+        // Load the configuration
+        Config& config = Config::getSingleton();
+        config.prefix = "Control/";
+        quint16 port = config.value("Port").toInt();
+
         i = 0;
 //        connect(&mTimer, SIGNAL(timeout()), this, SLOT(update()));
         mTimer.start(500);
 
         // Set up socket
-        quint16 port = 28051;
         mSocket = new QUdpSocket(this);
         connect(mSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
         if (not mSocket->bind(QHostAddress::Any, port))
@@ -37,7 +42,7 @@ public:
         connect(mDiscover, &Discover::sendDatagram, this, &DroneControl::sendDatagram);
         connect(mDiscover, &Discover::towerChanged, this, &DroneControl::towerChanged);
         connect(mDiscover, &Discover::peerChanged, this, &DroneControl::peerChanged);
-        mDiscover->start("Control", 1, "76.14.55.211", 28050);
+        mDiscover->start("Control");
     }
 
     long traffic () const { return mTraffic; }

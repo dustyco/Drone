@@ -6,6 +6,7 @@
 #include <QHostInfo>
 #include <iostream>
 #include "Messages.h"
+#include "Config.h"
 
 class Discover : public QObject
 {
@@ -20,8 +21,14 @@ public:
 
     }
 
-    void start (QString role, int channel, QString towerString, quint16 towerPort)
+    void start (QString role)
     {
+        // Configuration
+        Config& config = Config::getSingleton();
+        QString towerString(config.value("Tower Host").toString());
+        quint16 towerPort = config.value("Tower Port").toInt();
+        int channel = config.value("Channel").toInt();
+
         // TODO Get most of this stuff from configuration
         mRole = role;
         mChannel = channel;

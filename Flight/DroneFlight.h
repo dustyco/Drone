@@ -12,6 +12,7 @@
 #include <map>
 #include "../Shared/Messages.h"
 #include "../Shared/Discover.h"
+#include "../Shared/Config.h"
 
 class DroneFlight : public QObject
 {
@@ -20,11 +21,16 @@ class DroneFlight : public QObject
 public:
     explicit DroneFlight (QObject *parent = 0)
     {
+        // Load the configuration
+        Config& config = Config::getSingleton();
+        config.prefix = "Flight/";
+        quint16 port = config.value("Port").toInt();
+
+
 //        connect(&mTimer, SIGNAL(timeout()), this, SLOT(update()));
         mTimer.start(500);
 
         // Set up socket
-        quint16 port = 28052;
         mSocket = new QUdpSocket(this);
         connect(mSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
         if (not mSocket->bind(QHostAddress::Any, port))
@@ -38,7 +44,7 @@ public:
         connect(mDiscover, &Discover::sendDatagram, this, &DroneFlight::sendDatagram);
         connect(mDiscover, &Discover::towerChanged, this, &DroneFlight::towerChanged);
         connect(mDiscover, &Discover::peerChanged, this, &DroneFlight::peerChanged);
-        mDiscover->start("Flight", 1, "76.14.55.211", 28050);
+        mDiscover->start("Flight");
     }
 
 signals:
