@@ -20,7 +20,7 @@
 
 #include <iostream>
 #include <QSettings>
-#include <Qdir>
+#include <QDir>
 
 class Config
 {
