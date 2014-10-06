@@ -4,7 +4,9 @@
 #include <QObject>
 #include <QTimer>
 #include <QHostInfo>
+#include <QDateTime>
 #include <iostream>
+#include <map>
 #include "Messages.h"
 #include "Config.h"
 
@@ -84,6 +86,7 @@ public slots:
             Ping ping;
             ping.id = ++mLastPingId;
             ping.trips = 1;
+            pingTimes[ping.id] = QDateTime::currentDateTime();
             emit sendDatagram(encodeMessage<Ping>(ping), "Ping", mPeerAddress, mPeerPort);
         }
 
@@ -129,6 +132,17 @@ public slots:
         // TODO Possibly do pinging with the Tower as well
 
         // TODO Count the time since the last ping with this id
+        if (pingTimes.find(ping.id) == pingTimes.end())
+        {
+            // Send time is not recorded yet, do it
+            pingTimes[ping.id] = QDateTime::currentDateTime();
+        }
+        else
+        {
+            // Send time is recorded, ping is the difference between now and then
+            float dif = 1e-3*pingTimes[ping.id].msecsTo(QDateTime::currentDateTime());
+            std::cout << "Ping: " << 1e3*dif << " ms" << std::endl;
+        }
 
         // Respond to the ping if it has not made 3 trips yet
         if (not mPeerAddress.isNull() and ping.trips < 3)
@@ -147,6 +161,7 @@ private:
     QString mTowerString, mRole;
     int mChannel;
     int mLastPingId;
+    std::map<int,QDateTime> pingTimes;
 };
 
 #endif // DISCOVER_H
