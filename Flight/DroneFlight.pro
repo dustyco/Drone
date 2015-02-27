@@ -19,3 +19,6 @@ HEADERS += ../Shared/*.h
 SOURCES += ../Shared/*.cpp
 HEADERS += *.h
 SOURCES += *.cpp
+
+
+CONFIG   += c++11
