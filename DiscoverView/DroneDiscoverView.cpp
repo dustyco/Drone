@@ -79,6 +79,6 @@ void DroneDiscoverView::recordLost (Record record)
 {
 	records[record] += 1;
 	records[record] *= -1;
-	qDebug() << "change:" << records[record];
+	//qDebug() << "change:" << records[record];
 	emit textChanged(text());
 }

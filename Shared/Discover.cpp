@@ -35,7 +35,7 @@ Discover::Discover(QObject *parent) : QObject(parent)
 
 Discover::~Discover()
 {
-	qDebug() << "Deleting";
+	//qDebug() << "Deleting";
 	departure = true;
 	announceRecords();
 	running = false;

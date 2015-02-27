@@ -40,19 +40,31 @@ public:
         //mTraffic = 0;
 
         // Start peer discovery (may send first signal immediately, resolve deps first
-        mDiscover = new Discover(this);
+/*        mDiscover = new Discover(this);
         connect(mDiscover, &Discover::sendDatagram, this, &DroneFlight::sendDatagram);
         connect(mDiscover, &Discover::towerChanged, this, &DroneFlight::towerChanged);
         connect(mDiscover, &Discover::peerChanged, this, &DroneFlight::peerChanged);
         mDiscover->start("Flight");
+*/
+
+		// Start peer discovery
+		Record record;
+		record["Service"] = "DroneFlight";
+		record["Scope"] = "Local";
+
+		mDiscover = new Discover(this);
+		//connect(mDiscover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
+		//connect(mDiscover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
+		mDiscover->addRecord(record);
+		mDiscover->start();
     }
 
 signals:
 
 public slots:
     void readDatagrams ()
-    {
-        while (mSocket->hasPendingDatagrams())
+	{/*
+		while (mSocket->hasPendingDatagrams())
         {
             // Read datagram
             QByteArray datagram;
@@ -93,7 +105,8 @@ public slots:
             //logTrafficIn(type, datagram.size());
 
         }
-    }
+
+	*/}
 
     void towerChanged (QHostAddress address, quint16 port)
     {
