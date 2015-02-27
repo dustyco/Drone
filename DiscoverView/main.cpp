@@ -1,12 +1,12 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include "DroneControl.h"
+#include "DroneDiscoverView.h"
 #include <QtQml>
 
 int main(int argc, char *argv[])
 {
 
-    qmlRegisterType<DroneDiscoverView>("Drone", 1, 0, "DroneControl");
+    qmlRegisterType<DroneDiscoverView>("Drone", 1, 0, "DroneDiscoverView");
 
     QGuiApplication app(argc, argv);
 

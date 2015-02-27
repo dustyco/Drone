@@ -130,6 +130,7 @@ public slots:
         //      (either choose to listen or ignore)
 
         // TODO Possibly do pinging with the Tower as well
+        std::cout << "Got ping from " << address.toString().toStdString() << ":" << port << std::endl;
 
         // TODO Count the time since the last ping with this id
         if (pingTimes.find(ping.id) == pingTimes.end())

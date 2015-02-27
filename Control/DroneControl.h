@@ -9,15 +9,16 @@
 #include <../Shared/Messages.h>
 #include <../Shared/Config.h>
 
-class DroneControl : public QObject
+class DroneDiscoverView : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString networkStatus READ networkStatus WRITE setNetworkStatus NOTIFY networkStatusChanged)
     Q_PROPERTY(long traffic READ traffic NOTIFY trafficChanged)
+    Q_PROPERTY(long ping READ ping NOTIFY pingChanged)
     Q_PROPERTY(qreal frameTrigger READ frameTrigger WRITE setFrameTrigger) // See setFrameTrigger()
 
 public:
-    explicit DroneControl (QObject *parent = 0)
+    explicit DroneDiscoverView (QObject *parent = 0)
     {
         // Load the configuration
         Config& config = Config::getSingleton();
@@ -36,16 +37,18 @@ public:
         else std::cout << "Using port " << port << std::endl;
 
         mTraffic = 0;
+        mPing = 0;
 
         // Start peer discovery (may send first signal immediately, resolve deps first
         mDiscover = new Discover(this);
-        connect(mDiscover, &Discover::sendDatagram, this, &DroneControl::sendDatagram);
-        connect(mDiscover, &Discover::towerChanged, this, &DroneControl::towerChanged);
-        connect(mDiscover, &Discover::peerChanged, this, &DroneControl::peerChanged);
+        connect(mDiscover, &Discover::sendDatagram, this, &DroneDiscoverView::sendDatagram);
+        connect(mDiscover, &Discover::towerChanged, this, &DroneDiscoverView::towerChanged);
+        connect(mDiscover, &Discover::peerChanged, this, &DroneDiscoverView::peerChanged);
         mDiscover->start("Control");
     }
 
     long traffic () const { return mTraffic; }
+    long ping () const { return mPing; }
 
     QString networkStatus () const { return mNetworkStatus; }
     void setNetworkStatus (QString networkStatus)
@@ -71,6 +74,7 @@ public:
 signals:
     void networkStatusChanged (QString);
     void trafficChanged (long);
+    void pingChanged (long);
 
 public slots:
     void readDatagrams ()
@@ -143,6 +147,7 @@ private:
     QTimer mTowerTimer;
     int i;
     long mTraffic;
+    long mPing;
 
     void doNetworkStatus ()
     {

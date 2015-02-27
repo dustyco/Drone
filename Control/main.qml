@@ -4,6 +4,10 @@ import QtQuick.Window 2.1
 import QtQuick.Layouts 1.1
 import Drone 1.0
 
+// 0.33333333333333333333 KB/s
+// 3 s/KB
+// min/GB
+
 Window {
     visible: true
     width: 640
@@ -24,7 +28,7 @@ Window {
 
 
     Image {
-        //source: "http://i.ytimg.com/vi/H5Po0gwuFqY/maxresdefault.jpg"
+        source: "http://i.ytimg.com/vi/H5Po0gwuFqY/maxresdefault.jpg"
         anchors.fill: parent
     }
 
@@ -51,7 +55,7 @@ Window {
 
             Text {
                 x: 50
-                text: "Traffic: " + control.traffic + " Bytes"
+                text: "Traffic: " + Math.round(control.traffic/1000) + " KB"
                 font.family: "monospace"
                 font.pixelSize: em*1
                 color: "black"
