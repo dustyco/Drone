@@ -9,7 +9,7 @@ private:
 	Identity ();
 
 public:
-	static QString basedOnInterfaces ();
+	static QString basedOnInterfaces (QByteArray salt = "");
 };
 
 #endif // IDENTITY_H

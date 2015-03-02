@@ -59,7 +59,7 @@ void Discover::addRecord (Record record)
 {
 	// Inject a default Scope
 	if (record["Scope"].isEmpty()) record["Scope"] = "Local";
-	record["Instance"] = QString::number(quint64(this));
+	record["Instance"] = Identity::basedOnInterfaces(QByteArray::number(quint64(this)));
 	record["Machine"] = Identity::basedOnInterfaces();
 
 	// These will be announced or given in responses
