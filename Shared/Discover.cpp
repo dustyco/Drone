@@ -4,6 +4,7 @@
 #include "Discover.h"
 #include <QtNetwork>
 #include <QDateTime>
+#include "Identity.h"
 
 
 
@@ -59,6 +60,7 @@ void Discover::addRecord (Record record)
 	// Inject a default Scope
 	if (record["Scope"].isEmpty()) record["Scope"] = "Local";
 	record["Instance"] = QString::number(quint64(this));
+	record["Machine"] = Identity::basedOnInterfaces();
 
 	// These will be announced or given in responses
 	// TODO Instance UUID injection and maybe other reserved values

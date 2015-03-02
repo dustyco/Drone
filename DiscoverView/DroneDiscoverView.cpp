@@ -24,7 +24,7 @@ DroneDiscoverView::DroneDiscoverView (QObject *parent)
 
 QString DroneDiscoverView::text () const
 {
-	QString groupBy("Instance");
+	QString groupBy("Machine");
 
 	// Sort records by the instance
 	QMap<QString,QList<QString> > lines;
