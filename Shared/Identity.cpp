@@ -11,11 +11,50 @@ QString Identity::basedOnInterfaces (QByteArray salt)
 	auto ifaces = QNetworkInterface::allInterfaces();
 
 	QByteArray data;
+
+	// Try get only real interfaces first
 	for (auto iface : ifaces)
-	{
-		qDebug() << "Iface:" << iface.name() << iface.hardwareAddress();
-		data += iface.hardwareAddress();
+    {
+        QString name = iface.name();
+        QString hName = iface.humanReadableName();
+        QString addr = iface.hardwareAddress();
+        if (addr == "00:00:00:00:00:00") addr = "";
+        if (addr == "00:00:00:00:00:00:00:E0") addr = "";
+
+        if (not addr.isEmpty() and
+                (name.startsWith("en") or // OS X and new linux
+                 name.startsWith("wlo") or // New linux
+                 name.startsWith("eth") or // Old Linux
+                 name.startsWith("wlan") or // Old Linux
+                 hName.startsWith("Wi-Fi") or // Windows
+                 hName.startsWith("Ethernet") // Windows
+                 ))
+		{
+            qDebug() << "Real iface:" << name << hName << addr;
+			data += addr;
+		}
+        else qDebug() << "Ignoring iface:" << name << hName << addr;
 	}
+
+    // Behavior change: If there weren't positive results, don't return anything, skip the next step
+    if (data.isEmpty()) return "";
+
+	// If no real interfaces, combine all available
+	if (data.isEmpty())
+	{
+		for (auto iface : ifaces)
+		{
+            QString name = iface.name();
+            QString hName = iface.humanReadableName();
+			QString addr = iface.hardwareAddress();
+			if (addr == "00:00:00:00:00:00") addr = "";
+            if (addr == "00:00:00:00:00:00:00:E0") addr = "";
+
+            qDebug() << "Fallback iface:" << name << hName << addr;
+			data += addr;
+		}
+	}
+	qDebug() << "";
 
 	// No hardware addresses?
 	if (data.isEmpty()) return "";
