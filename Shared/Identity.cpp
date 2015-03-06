@@ -10,7 +10,7 @@ QString Identity::basedOnInterfaces (QByteArray salt)
 {
 	auto ifaces = QNetworkInterface::allInterfaces();
 
-	QByteArray data;
+    QStringList addrList;
 
 	// Try get only real interfaces first
 	for (auto iface : ifaces)
@@ -31,16 +31,16 @@ QString Identity::basedOnInterfaces (QByteArray salt)
                  ))
 		{
             qDebug() << "Real iface:" << name << hName << addr;
-			data += addr;
+            addrList += addr;
 		}
         else qDebug() << "Ignoring iface:" << name << hName << addr;
-	}
+    }
 
     // Behavior change: If there weren't positive results, don't return anything, skip the next step
-    if (data.isEmpty()) return "";
+    if (addrList.isEmpty()) return "";
 
 	// If no real interfaces, combine all available
-	if (data.isEmpty())
+    if (addrList.isEmpty())
 	{
 		for (auto iface : ifaces)
 		{
@@ -51,13 +51,19 @@ QString Identity::basedOnInterfaces (QByteArray salt)
             if (addr == "00:00:00:00:00:00:00:E0") addr = "";
 
             qDebug() << "Fallback iface:" << name << hName << addr;
-			data += addr;
+            addrList += addr;
 		}
 	}
-	qDebug() << "";
 
-	// No hardware addresses?
-	if (data.isEmpty()) return "";
+    // No hardware addresses?
+		if (addrList.isEmpty()) return "";
+
+    // Sort and concatenate them
+    qSort(addrList);
+		QByteArray data(addrList.join(" - ").toUtf8());
+
+		qDebug() << "" << data;
+		qDebug() << "";
 
 	// Hash and cut a piece
 	data += salt;

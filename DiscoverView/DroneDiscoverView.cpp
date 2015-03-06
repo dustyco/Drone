@@ -3,12 +3,13 @@
 #include "DroneDiscoverView.h"
 
 
-DroneDiscoverView::DroneDiscoverView (QObject *parent)
+DroneDiscoverView::DroneDiscoverView (QObject *parent) : QObject(parent)
 {
 	// Load the configuration
 	Config& config = Config::getSingleton();
 	config.prefix = "DiscoverView/";
 	quint16 port = config.value("Port").toInt();
+	Q_UNUSED(port);
 
 	// Start peer discovery
 	Record record;

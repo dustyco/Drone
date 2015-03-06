@@ -49,6 +49,9 @@ private slots:
 	void acceptRecords (QList<Record> records, bool removeThem, QString senderScope, QString senderAddress, QString senderPort);
 
 private:
+	bool passesFilters (Record record);
+	
+private:
 	QList<Record> ownedRecords;
 	QMap<Record,qint64> foundRecords; // Second value is timestamp of last received
 	bool running;
@@ -62,6 +65,7 @@ private:
 	QTimer *expireTimer;
 	QUdpSocket* loopbackSocket;
 	QMap<QString, QUdpSocket*> multiSocket;
+	QMap<QString, QString> filters;
 };
 
 #endif // DISCOVER_H

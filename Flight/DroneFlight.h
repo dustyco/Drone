@@ -4,17 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QUdpSocket>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QDateTime>
-#include <QHostInfo>
-#include <iostream>
-#include <map>
-#include "../Shared/Messages.h"
 #include "../Shared/Discover.h"
-#include "../Shared/Config.h"
-
-#include "../Shared/Identity.h"
 
 class DroneFlight : public QObject
 {

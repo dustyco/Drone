@@ -45,6 +45,7 @@ Discover::~Discover()
 void Discover::addGlobalServer (QString globalServer)
 {
 	// TODO
+	Q_UNUSED(globalServer);
 	
 	// Announce it immediately after returning to event loop
 	if (running and not mServerMode) timer->start(0);
@@ -52,7 +53,7 @@ void Discover::addGlobalServer (QString globalServer)
 
 void Discover::addFilter (QString key, QString value)
 {
-	// TODO
+	filters[key] = value;
 }
 
 void Discover::addRecord (Record record)
@@ -318,7 +319,7 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 		else
 		{
 			// See if it's new
-			if (not foundRecords.contains(record))
+			if (not foundRecords.contains(record) and passesFilters(record))
 			{
 				qDebug() << "Found Record:" << record.toString();
 				emit recordFound(record);
@@ -330,6 +331,21 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 
 		expireTimer->start(0); // In case the next expiration time was changed
 	}
+}
+
+bool Discover::passesFilters (Record record)
+{
+	// No filters, default pass
+	if (filters.isEmpty()) return true;
+	
+	// Try to eliminate
+	for (QString key : filters.keys())
+	{
+		if (not record.has(key) or record[key] != filters[key]) return false;
+	}
+	
+	// It's good
+	return true;
 }
 
 

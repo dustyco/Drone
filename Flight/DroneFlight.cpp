@@ -1,43 +1,28 @@
 
 #include "DroneFlight.h"
 
-#include <QObject>
-#include <QTimer>
-#include <QUdpSocket>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QDateTime>
-#include <QHostInfo>
-#include <iostream>
-#include <map>
 #include "../Shared/Messages.h"
 #include "../Shared/Discover.h"
 #include "../Shared/Config.h"
 
-//#include "../Shared/Identity.h"
 
 
-
-DroneFlight::DroneFlight (QObject *parent)
+DroneFlight::DroneFlight (QObject *parent) : QObject(parent)
 {
-	Identity::basedOnInterfaces();
-
 	// Load the configuration
 	Config& config = Config::getSingleton();
 	config.prefix = "Flight/";
-	quint16 port = config.value("Port").toInt();
+	//quint16 port = config.value("Port").toInt();
 
 
-//        connect(&mTimer, SIGNAL(timeout()), this, SLOT(update()));
-	mTimer.start(500);
 
 	// Set up socket
-	mSocket = new QUdpSocket(this);
+/*	mSocket = new QUdpSocket(this);
 	connect(mSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
 	if (not mSocket->bind(QHostAddress::Any, port))
 		std::cout << "Failed to bind to port " << port << std::endl;
 	else std::cout << "Using port " << port << std::endl;
-
+*/
 	//mTraffic = 0;
 
 	// Start peer discovery (may send first signal immediately, resolve deps first
@@ -118,6 +103,8 @@ void DroneFlight::peerChanged (QHostAddress address, quint16 port)
 
 void DroneFlight::sendDatagram (QByteArray datagram, QString messageType, QHostAddress address, quint16 port)
 {
+	Q_UNUSED(messageType);
+	// TODO
 	//logTrafficOut(messageType, datagram.size());
 	mSocket->writeDatagram(datagram, address, port);
 }

@@ -1,10 +1,10 @@
 
 
-_pkgname=drone-flight
-_subdir=Flight
-_binary=DroneFlight
+_pkgname=drone-find
+_subdir=Find
+_binary=DroneFind
 
-_servicefile=$_binary.service
+#_servicefile=$_binary.service
 _giturl=https://github.com/dustyco/Drone.git
 
 pkgname=$_pkgname-git
@@ -38,5 +38,5 @@ package() {
 #  make install PREFIX="$pkgdir/usr" SYSCONFDIR="$pkgdir/etc/local/$_pkgname"
 
   install -Dm755 "$srcdir/$_pkgname/$_subdir/$_binary" "$pkgdir/usr/bin/$_binary"
-  install -Dm644 "$srcdir/$_pkgname/$_subdir/$_servicefile" "$pkgdir/usr/lib/systemd/system/$_servicefile"
+#  install -Dm644 "$srcdir/$_pkgname/$_subdir/$_servicefile" "$pkgdir/usr/lib/systemd/system/$_servicefile"
 }
