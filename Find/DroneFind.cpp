@@ -24,15 +24,15 @@ DroneFind::DroneFind (QObject *parent) : QObject(parent)
 	QString value = args[2];
 	
 	// Disable Qt debug messages
-	qInstallMessageHandler(ignoreMessages);
+	//qInstallMessageHandler(ignoreMessages);
 	
 	// Start peer discovery
-	Record record;
+	//Record record;
 
 	mDiscover = new Discover(this);
 	connect(mDiscover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
 	connect(mDiscover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
-	mDiscover->addRecord(record);
+	//mDiscover->addRecord(record);
 	mDiscover->addFilter(key, value);
 	mDiscover->start();
 }

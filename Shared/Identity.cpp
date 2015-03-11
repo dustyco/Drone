@@ -2,6 +2,8 @@
 #include <QNetworkInterface>
 #include <QCryptographicHash>
 
+static const bool DEBUG_IDENTITY = false;
+
 Identity::Identity ()
 {
 }
@@ -30,10 +32,10 @@ QString Identity::basedOnInterfaces (QByteArray salt)
                  hName.startsWith("Ethernet") // Windows
                  ))
 		{
-            qDebug() << "Real iface:" << name << hName << addr;
+						if (DEBUG_IDENTITY) qDebug() << "Real iface:" << name << hName << addr;
             addrList += addr;
 		}
-        else qDebug() << "Ignoring iface:" << name << hName << addr;
+				else if (DEBUG_IDENTITY) qDebug() << "Ignoring iface:" << name << hName << addr;
     }
 
     // Behavior change: If there weren't positive results, don't return anything, skip the next step
@@ -50,7 +52,7 @@ QString Identity::basedOnInterfaces (QByteArray salt)
 			if (addr == "00:00:00:00:00:00") addr = "";
             if (addr == "00:00:00:00:00:00:00:E0") addr = "";
 
-            qDebug() << "Fallback iface:" << name << hName << addr;
+						if (DEBUG_IDENTITY) qDebug() << "Fallback iface:" << name << hName << addr;
             addrList += addr;
 		}
 	}
@@ -62,8 +64,8 @@ QString Identity::basedOnInterfaces (QByteArray salt)
     qSort(addrList);
 		QByteArray data(addrList.join(" - ").toUtf8());
 
-		qDebug() << "" << data;
-		qDebug() << "";
+		if (DEBUG_IDENTITY) qDebug() << "" << data;
+		if (DEBUG_IDENTITY) qDebug() << "";
 
 	// Hash and cut a piece
 	data += salt;

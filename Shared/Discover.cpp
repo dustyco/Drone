@@ -7,16 +7,26 @@
 #include "Identity.h"
 
 
+QByteArray makeDatagram (QList<Record> records)
+{
+	// TODO Compress reserved names (and uncompress elsewhere)
+	for (Record& record : records)
+	{
+		record.remove("Scope");
+	}
+	return Record::listToBytes(records);
+}
 
 Discover::Discover(QObject *parent) : QObject(parent)
 {
 	port = 45454;
 	groupAddress = QHostAddress("239.255.43.21");
-	announcePeriodMsec = 500;
+	announcePeriodMsec = 2000;
 	running = false;
 	mServerMode = false;
 	announceNeedsResponse = true;
 	departure = false;
+	defaultScope = "Local";
 	
 	// Timers
 	timer = new QTimer(this);
@@ -153,12 +163,13 @@ void Discover::readDatagrams()
 		// Normal: Respond to only Local requests with only owned Records
 		if (respond and not mServerMode and (scope=="Local" or scope=="Loopback"))
 		{
-			socket->writeDatagram(QByteArray("DSDA")+Record::listToBytes(ownedRecords), sender, senderPort);
+			qDebug() << "Responding:" << QByteArray("DSDA")+makeDatagram(ownedRecords) << "Address:" << sender.toString() << senderPort;
+			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords), sender, senderPort);
 		}
 		// Server: Respond to only Global requests with owned and found Records
-		else if (respond and mServerMode)
+		else if (respond and mServerMode and scope=="Global")
 		{
-			socket->writeDatagram(QByteArray("DSDA")+Record::listToBytes(ownedRecords + foundRecords.keys()), sender, senderPort);
+			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords + foundRecords.keys()), sender, senderPort);
 		}
 	}
 }
@@ -182,15 +193,14 @@ void Discover::announceRecords ()
 	for (Record record : ownedRecords)
 	if (record["Scope"] == "Global")
 	{
-		record.remove("Scope");
 		recordsToSend.push_back(record);
 	}
-	if (not recordsToSend.empty())
+	if (not recordsToSend.empty() or defaultScope=="Global")
 	{
 		// This is a discovery request which should be responded to
 		QByteArray datagram("DSDR");
 		if (departure) datagram = "DSDD";
-		datagram += Record::listToBytes(recordsToSend);
+		datagram += makeDatagram(recordsToSend);
 
 		// TODO Send to each Global server
 		qDebug() << "Sending to global server";
@@ -202,15 +212,14 @@ void Discover::announceRecords ()
 	for (Record record : ownedRecords)
 	if (record["Scope"] == "Local")
 	{
-		record.remove("Scope");
 		recordsToSend.push_back(record);
 	}
-	if (not recordsToSend.empty())
+	if (not recordsToSend.empty() or defaultScope=="Global" or defaultScope=="Local")
 	{
 		QByteArray datagram("DSDA");
 		if (announceNeedsResponse) datagram = "DSDR";
 		if (departure)             datagram = "DSDD";
-		datagram += Record::listToBytes(recordsToSend);
+		datagram += makeDatagram(recordsToSend);
 
 		// For each interface
 		for (auto iface : QNetworkInterface::allInterfaces())
@@ -241,6 +250,7 @@ void Discover::announceRecords ()
 					}
 
 					// Send datagram
+					qDebug() << "Multicasting:" << datagram;
 					multiSocket[entry.ip().toString()]->writeDatagram(datagram, groupAddress, port);
 				}
 			}
@@ -248,20 +258,19 @@ void Discover::announceRecords ()
 	}
 
 	///////////////////////////////////////////////////////////////////////
-	// Local scope last
+	// Loopback scope last
 	///////////////////////////////////////////////////////////////////////
 	for (Record record : ownedRecords)
 	if (record["Scope"] == "Loopback")
 	{
-		record.remove("Scope"); // Scope has a different meaning on the receiving end
 		recordsToSend.push_back(record);
 	}
-	if (not recordsToSend.empty())
+	if (not recordsToSend.empty() or true) // Any scope is above or equivalent to loopback
 	{
 		QByteArray datagram("DSDA");
 		if (announceNeedsResponse) datagram = "DSDR";
 		if (departure)             datagram = "DSDD";
-		datagram += Record::listToBytes(recordsToSend);
+		datagram += makeDatagram(recordsToSend);
 
 		// Loopback
 		loopbackSocket->writeDatagram(datagram, QHostAddress::LocalHost, port);

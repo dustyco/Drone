@@ -52,6 +52,7 @@ private:
 	bool passesFilters (Record record);
 	
 private:
+	QString defaultScope;
 	QList<Record> ownedRecords;
 	QMap<Record,qint64> foundRecords; // Second value is timestamp of last received
 	bool running;
