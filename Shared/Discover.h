@@ -67,6 +67,7 @@ private:
 	QUdpSocket* loopbackSocket;
 	QMap<QString, QUdpSocket*> multiSocket;
 	QMap<QString, QString> filters;
+	QSet<QHostAddress> globalServers;
 };
 
 #endif // DISCOVER_H

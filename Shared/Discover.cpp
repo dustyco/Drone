@@ -21,7 +21,7 @@ Discover::Discover(QObject *parent) : QObject(parent)
 {
 	port = 45454;
 	groupAddress = QHostAddress("239.255.43.21");
-	announcePeriodMsec = 2000;
+	announcePeriodMsec = 500;
 	running = false;
 	mServerMode = false;
 	announceNeedsResponse = true;
@@ -54,9 +54,11 @@ Discover::~Discover()
 
 void Discover::addGlobalServer (QString globalServer)
 {
-	// TODO
-	Q_UNUSED(globalServer);
-	
+	// TODO DNS name resolution
+	QHostAddress address(globalServer);
+	if (address.isNull()) qDebug() << "Broken server name:" << globalServer;
+	else globalServers.insert(address);
+
 	// Announce it immediately after returning to event loop
 	if (running and not mServerMode) timer->start(0);
 }
@@ -163,7 +165,7 @@ void Discover::readDatagrams()
 		// Normal: Respond to only Local requests with only owned Records
 		if (respond and not mServerMode and (scope=="Local" or scope=="Loopback"))
 		{
-			qDebug() << "Responding:" << QByteArray("DSDA")+makeDatagram(ownedRecords) << "Address:" << sender.toString() << senderPort;
+			//qDebug() << "Responding:" << QByteArray("DSDA")+makeDatagram(ownedRecords) << "Address:" << sender.toString() << senderPort;
 			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords), sender, senderPort);
 		}
 		// Server: Respond to only Global requests with owned and found Records
@@ -203,7 +205,11 @@ void Discover::announceRecords ()
 		datagram += makeDatagram(recordsToSend);
 
 		// TODO Send to each Global server
-		qDebug() << "Sending to global server";
+		for (QHostAddress globalServer : globalServers)
+		{
+			//qDebug() << "Sending to" << globalServer;
+			loopbackSocket->writeDatagram(datagram, globalServer, port);
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////
@@ -250,7 +256,7 @@ void Discover::announceRecords ()
 					}
 
 					// Send datagram
-					qDebug() << "Multicasting:" << datagram;
+					//qDebug() << "Multicasting:" << datagram;
 					multiSocket[entry.ip().toString()]->writeDatagram(datagram, groupAddress, port);
 				}
 			}

@@ -14,12 +14,13 @@ DroneDiscoverView::DroneDiscoverView (QObject *parent) : QObject(parent)
 	// Start peer discovery
 	Record record;
 	record["Service"] = "DroneDiscoverView";
-	record["Scope"] = "Local";
+	record["Scope"] = "Global";
 
 	discover = new Discover(this);
 	connect(discover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
 	connect(discover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
 	discover->addRecord(record);
+	discover->addGlobalServer("76.14.48.127");
 	discover->start();
 }
 
