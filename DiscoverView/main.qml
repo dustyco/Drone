@@ -17,31 +17,60 @@ Window {
 
     DroneDiscoverView {
         id: discoverView
-    }
+		}
 
-    Rectangle {
-        width: row.width + em
-        height: row.height
-        //anchors.horizontalCenter: parent.horizontalCenter
-        anchors.centerIn: parent
-        y: border.width*-1
+		Rectangle {
+				width: row.width + em
+				height: row.height
+				//anchors.horizontalCenter: parent.horizontalCenter
+				anchors.centerIn: parent
+				y: border.width*-1
 
-        color: "#80FFFFFF"
-        border.color: "black"
+				color: "#80FFFFFF"
+				border.color: "black"
 				border.width: em*0.1
 
-        RowLayout {
-            id: row
+				RowLayout {
+						id: row
 
-            Text {
-                x: 50
-                text: discoverView.text
-                font.family: "monospace"
-                font.pixelSize: em*1
-                color: "black"
-            }
-        }
+						Text {
+								x: 50
+								text: discoverView.text
+								font.family: "monospace"
+								font.pixelSize: em*1
+								color: "black"
+						}
+				}
 
-    }
+		}
+
+		Rectangle {
+				width: vRow.width + em
+				height: vRow.height
+				//anchors.horizontalCenter: parent.horizontalCenter
+				anchors.margins: em
+				anchors.bottom: parent.bottom
+				anchors.horizontalCenter: parent.horizontalCenter
+				y: border.width*-1
+
+				color: "#80FFFFFF"
+				border.color: "black"
+				border.width: em*0.1
+
+
+				RowLayout {
+						id: vRow
+						anchors.margins: em
+
+						Text {
+								x: 50
+								text: "Version: " + discoverView.version
+								font.family: "monospace"
+								font.pixelSize: em*1
+								color: "black"
+						}
+				}
+
+		}
 
 }

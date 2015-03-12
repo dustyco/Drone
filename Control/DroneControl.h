@@ -20,6 +20,10 @@ class DroneDiscoverView : public QObject
 public:
     explicit DroneDiscoverView (QObject *parent = 0)
     {
+		// Print the version
+		QString version(GIT_VERSION);
+		std::cout << "DroneControl " << version.toStdString() << std::endl;
+
         // Load the configuration
         Config& config = Config::getSingleton();
         config.prefix = "Control/";

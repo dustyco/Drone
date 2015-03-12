@@ -1,10 +1,15 @@
 
 
 #include "DroneDiscoverView.h"
+#include <iostream>
 
 
 DroneDiscoverView::DroneDiscoverView (QObject *parent) : QObject(parent)
 {
+	// Print the version
+	QString version(GIT_VERSION);
+	std::cout << "DroneDiscoverView " << version.toStdString() << std::endl;
+
 	// Load the configuration
 	Config& config = Config::getSingleton();
 	config.prefix = "DiscoverView/";
@@ -22,6 +27,11 @@ DroneDiscoverView::DroneDiscoverView (QObject *parent) : QObject(parent)
 	discover->addRecord(record);
 	discover->addGlobalServer("76.14.48.127");
 	discover->start();
+}
+
+QString DroneDiscoverView::version() const
+{
+	return GIT_VERSION;
 }
 
 QString DroneDiscoverView::text () const

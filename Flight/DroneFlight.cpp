@@ -4,11 +4,15 @@
 #include "../Shared/Messages.h"
 #include "../Shared/Discover.h"
 #include "../Shared/Config.h"
-
+#include <iostream>
 
 
 DroneFlight::DroneFlight (QObject *parent) : QObject(parent)
 {
+	// Print the version
+	QString version(GIT_VERSION);
+	std::cout << "DroneFlight " << version.toStdString() << std::endl;
+
 	// Load the configuration
 	Config& config = Config::getSingleton();
 	config.prefix = "Flight/";
