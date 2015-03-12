@@ -65,6 +65,7 @@ private:
 	QTimer *timer;
 	QTimer *expireTimer;
 	QUdpSocket* loopbackSocket;
+	QUdpSocket* globalSocket;
 	QMap<QString, QUdpSocket*> multiSocket;
 	QMap<QString, QString> filters;
 	QSet<QHostAddress> globalServers;

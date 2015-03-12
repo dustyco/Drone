@@ -33,13 +33,21 @@ Discover::Discover(QObject *parent) : QObject(parent)
 	connect(timer, SIGNAL(timeout()), this, SLOT(announceRecords()));
 	expireTimer = new QTimer(this);
 	connect(expireTimer, SIGNAL(timeout()), this, SLOT(expireRecords()));
-	
-	// Global socket
+
+	// Loopback socket
 	loopbackSocket = new QUdpSocket(this);
 	connect(loopbackSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
-	if (not loopbackSocket->bind(QHostAddress::AnyIPv4, port, QAbstractSocket::ShareAddress | QUdpSocket::ReuseAddressHint))
+	if (not loopbackSocket->bind(QHostAddress::AnyIPv4, port, QAbstractSocket::ShareAddress | QAbstractSocket::ReuseAddressHint))
 	{
 		qDebug() << "Error binding loopbackSocket:" << loopbackSocket->errorString();
+	}
+
+	// Global socket
+	globalSocket = new QUdpSocket(this);
+	connect(globalSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
+	if (not globalSocket->bind(QHostAddress::AnyIPv4))
+	{
+		qDebug() << "Error binding globalSocket:" << globalSocket->errorString();
 	}
 
 }
@@ -208,7 +216,7 @@ void Discover::announceRecords ()
 		for (QHostAddress globalServer : globalServers)
 		{
 			//qDebug() << "Sending to" << globalServer;
-			loopbackSocket->writeDatagram(datagram, globalServer, port);
+			globalSocket->writeDatagram(datagram, globalServer, port);
 		}
 	}
 
