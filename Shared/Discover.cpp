@@ -167,7 +167,7 @@ void Discover::readDatagrams()
 			}
 		}
 
-		//
+		// Process the records locally
 		acceptRecords(Record::listFromBytes(datagram), removeThem, scope, sender.toString(), QString::number(senderPort));
 
 		// Normal: Respond to only Local requests with only owned Records
@@ -319,6 +319,8 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 {
 	// TODO
 	
+	// This function gets its own copy of records
+	// This loop edits each item so it can be used after
 	for (Record& record : records)
 	{
 		// Preprocess the record before considering it
@@ -353,6 +355,20 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 		}
 
 		expireTimer->start(0); // In case the next expiration time was changed
+	}
+	
+	// Server: Forward global departures to other global peers
+	if (mServerMode and removeThem and senderScope == "Global")
+	{
+		QByteArray datagram("DSDD");
+		datagram += makeDatagram(records);
+		
+		for (Record& record : foundRecords.keys())
+		if (record["Scope"] == "Global")
+		{
+			bool ok;
+			globalSocket->writeDatagram(datagram, QHostAddress(record["Address"]), record["Port"].toUInt(&ok, 10));
+		}
 	}
 }
 
