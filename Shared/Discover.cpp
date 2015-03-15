@@ -7,6 +7,10 @@
 #include "Identity.h"
 
 
+// TODO
+// Server: Forwards new global records to all global peers
+// Both modes: Broadcasts departure directly to global peers (test without global server forwarding)
+
 QByteArray makeDatagram (QList<Record> records)
 {
 	// TODO Compress reserved names (and uncompress elsewhere)
@@ -35,17 +39,18 @@ Discover::Discover(QObject *parent) : QObject(parent)
 	connect(expireTimer, SIGNAL(timeout()), this, SLOT(expireRecords()));
 
 	// Loopback socket
-	loopbackSocket = new QUdpSocket(this);
-	connect(loopbackSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
-	if (not loopbackSocket->bind(QHostAddress::AnyIPv4, port, QAbstractSocket::ShareAddress | QAbstractSocket::ReuseAddressHint))
-	{
-		qDebug() << "Error binding loopbackSocket:" << loopbackSocket->errorString();
-	}
+//	loopbackSocket = new QUdpSocket(this);
+//	connect(loopbackSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
+//	if (not loopbackSocket->bind(QHostAddress::LocalHost, port, QAbstractSocket::ShareAddress | QAbstractSocket::ReuseAddressHint))
+//	{
+//		qDebug() << "Error binding loopbackSocket:" << loopbackSocket->errorString();
+//	}
 
 	// Global socket
+	// TODO Server socket has a fixed IP
 	globalSocket = new QUdpSocket(this);
 	connect(globalSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
-	if (not globalSocket->bind(QHostAddress::AnyIPv4))
+	if (not globalSocket->bind(QHostAddress::AnyIPv4, mServerMode?port:0))
 	{
 		qDebug() << "Error binding globalSocket:" << globalSocket->errorString();
 	}
@@ -95,6 +100,13 @@ void Discover::addRecord (Record record)
 
 void Discover::setGlobalServerMode (bool b)
 {
+	// Rebind global socket if necessary
+	if (b != mServerMode)
+	if (not globalSocket->bind(QHostAddress::AnyIPv4, mServerMode?port:0))
+	{
+		qDebug() << "Error binding globalSocket:" << globalSocket->errorString();
+	}
+
 	mServerMode = b;
 	
 	if (mServerMode)
@@ -287,7 +299,7 @@ void Discover::announceRecords ()
 		datagram += makeDatagram(recordsToSend);
 
 		// Loopback
-		loopbackSocket->writeDatagram(datagram, QHostAddress::LocalHost, port);
+		//loopbackSocket->writeDatagram(datagram, QHostAddress::LocalHost, port);
 	}
 
 	// Reset
