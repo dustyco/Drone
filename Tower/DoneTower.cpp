@@ -21,8 +21,7 @@ DroneTower::DroneTower (QObject *parent) : QObject(parent)
 	record["Service"] = "DroneTower";
 	record["Scope"] = "Global";
 
-	mDiscover = new Discover(this);
-	mDiscover->setGlobalServerMode(true);
+	mDiscover = new Discover(this, true);
 	mDiscover->addRecord(record);
 	mDiscover->start();
 

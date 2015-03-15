@@ -29,7 +29,7 @@ class Discover : public QObject
 	Q_OBJECT
 
 public:
-	explicit Discover (QObject *parent = 0);
+	explicit Discover (QObject *parent = 0, bool serverMode = false);
 	~Discover ();
 	void addGlobalServer (QString globalServer);
 	void addFilter (QString key, QString value);

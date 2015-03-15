@@ -21,7 +21,7 @@ QByteArray makeDatagram (QList<Record> records)
 	return Record::listToBytes(records);
 }
 
-Discover::Discover(QObject *parent) : QObject(parent)
+Discover::Discover(QObject *parent, bool serverMode) : QObject(parent)
 {
 	port = 45454;
 	groupAddress = QHostAddress("239.255.43.21");
@@ -31,12 +31,25 @@ Discover::Discover(QObject *parent) : QObject(parent)
 	announceNeedsResponse = true;
 	departure = false;
 	defaultScope = "Local";
-	
+
 	// Timers
 	timer = new QTimer(this);
 	connect(timer, SIGNAL(timeout()), this, SLOT(announceRecords()));
 	expireTimer = new QTimer(this);
 	connect(expireTimer, SIGNAL(timeout()), this, SLOT(expireRecords()));
+
+	// Server mode?
+	mServerMode = serverMode;
+	if (mServerMode)
+	{
+		// Server's don't announce periodically
+		timer->stop();
+	}
+	else
+	{
+		// Announce it immediately after returning to event loop
+		if (running) timer->start(0);
+	}
 
 	// Loopback socket
 //	loopbackSocket = new QUdpSocket(this);
@@ -96,29 +109,6 @@ void Discover::addRecord (Record record)
 	
 	// Announce it immediately after returning to event loop
 	if (running and not mServerMode) timer->start(0);
-}
-
-void Discover::setGlobalServerMode (bool b)
-{
-	// Rebind global socket if necessary
-	if (b != mServerMode)
-	if (not globalSocket->bind(QHostAddress::AnyIPv4, mServerMode?port:0))
-	{
-		qDebug() << "Error binding globalSocket:" << globalSocket->errorString();
-	}
-
-	mServerMode = b;
-	
-	if (mServerMode)
-	{
-		// Server's don't announce periodically
-		timer->stop();
-	}
-	else
-	{
-		// Announce it immediately after returning to event loop
-		if (running) timer->start(0);
-	}
 }
 
 bool Discover::start ()
