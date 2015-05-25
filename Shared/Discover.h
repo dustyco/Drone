@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMap>
 #include <QHostAddress>
+#include <QNetworkAddressEntry>
 #include <QTimer>
 #include <QUdpSocket>
 #include "Record.h"
@@ -50,6 +51,7 @@ private slots:
 
 private:
 	bool passesFilters (Record record);
+	bool addressIsLocal (QHostAddress address);
 	
 private:
 	QString defaultScope;
@@ -67,6 +69,7 @@ private:
 	QUdpSocket* loopbackSocket;
 	QUdpSocket* globalSocket;
 	QMap<QString, QUdpSocket*> multiSocket;
+	QList<QNetworkAddressEntry> addressEntryCache;
 	QMap<QString, QString> filters;
 	QSet<QHostAddress> globalServers;
 };

@@ -154,19 +154,7 @@ void Discover::readDatagrams()
 		}
 		else if (sender.protocol() == QAbstractSocket::IPv4Protocol)
 		{
-			quint32 senderInt = sender.toIPv4Address();
-			for (auto iface : QNetworkInterface::allInterfaces())
-			for (auto entry : iface.addressEntries())
-			if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol)
-			{
-				quint32 netmaskInt = entry.netmask().toIPv4Address();
-				quint32 entryInt = entry.ip().toIPv4Address();
-				if ((senderInt & netmaskInt) == (entryInt & netmaskInt))
-				{
-					// Came from the local network
-					scope = "Local";
-				}
-			}
+			if (addressIsLocal(sender)) scope = "Local";
 		}
 
 		// Process the records locally
@@ -245,13 +233,16 @@ void Discover::announceRecords ()
 			{
 				if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol) continue;
 
+				// Add it to addressEntryCache if necessary for local scope testing
+				if (not addressEntryCache.contains(entry)) addressEntryCache.push_back(entry);
+
 				// TODO Multicast
 				if (iface.flags().testFlag(QNetworkInterface::CanMulticast) and !entry.ip().isNull())
 				{
 					// Create the socket if it doesn't exit yet
 					if (not multiSocket.contains(entry.ip().toString()))
 					{
-						qDebug() << "New multicast socket: " << entry.ip().toString();
+						qDebug() << "New multicast socket: " << entry.ip().toString() << entry.netmask().toString() << entry.netmask().toIPv4Address();
 						// Add it, create and bind the socket
 						QUdpSocket* socket = new QUdpSocket(this);
 						connect(socket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
@@ -387,6 +378,27 @@ bool Discover::passesFilters (Record record)
 	
 	// It's good
 	return true;
+}
+
+bool Discover::addressIsLocal(QHostAddress address)
+{
+
+	quint32 senderInt = address.toIPv4Address();
+	for (auto entry : addressEntryCache)
+	if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol)
+	{
+		quint32 netmaskInt = entry.netmask().toIPv4Address();
+		if (netmaskInt==0 or netmaskInt==4294967295) continue; // Netmask isn't valid, either 0.0.0.0 or 255.255.255.255
+		// #BUG1
+		quint32 entryInt = entry.ip().toIPv4Address();
+		if ((senderInt & netmaskInt) == (entryInt & netmaskInt))
+		{
+			// Came from the local network
+			return true;
+		}
+	}
+
+	return false;
 }
 
 

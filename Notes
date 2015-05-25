@@ -1,0 +1,9 @@
+
+
+Discover bugs
+	
+- Windows, reset iface while running, local multicast socket does not rejoin multicast group
+
+- Windows, same host multicast messages come back from different IP, [expected 10.0.1.39] [got 169.254.80.80]
+
+- #BUG1 Android, reset iface while running, sometimes momentarily sees local hosts as global because at that time the iface isn't enumerated, cache
