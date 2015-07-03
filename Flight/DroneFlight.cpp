@@ -16,40 +16,59 @@ DroneFlight::DroneFlight (QObject *parent) : QObject(parent)
 	// Load the configuration
 	Config& config = Config::getSingleton();
 	config.prefix = "Flight/";
-	//quint16 port = config.value("Port").toInt();
+	QString configError = checkConfig();
+	if (not configError.isEmpty())
+	{
+		qDebug() << "Config error:" << configError;
+	}
+	QHostAddress towerAddress(config.value("Tower Address").toString());
+	quint16 towerPort = config.value("Tower Port").toInt();
 
-
-
-	// Set up socket
-/*	mSocket = new QUdpSocket(this);
-	connect(mSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
-	if (not mSocket->bind(QHostAddress::Any, port))
-		std::cout << "Failed to bind to port " << port << std::endl;
-	else std::cout << "Using port " << port << std::endl;
-*/
-	//mTraffic = 0;
-
-	// Start peer discovery (may send first signal immediately, resolve deps first
-/*        mDiscover = new Discover(this);
-	connect(mDiscover, &Discover::sendDatagram, this, &DroneFlight::sendDatagram);
-	connect(mDiscover, &Discover::towerChanged, this, &DroneFlight::towerChanged);
-	connect(mDiscover, &Discover::peerChanged, this, &DroneFlight::peerChanged);
-	mDiscover->start("Flight");
-*/
+	QHostAddress multicastAddress(config.value("Multicast Address").toString());
+	quint16 multicastPort = config.value("Multicast Port").toInt();
 
 	// Start peer discovery
 	Record record;
 	record["Service"] = "DroneFlight";
-	record["Scope"] = "Local";
+	record["Scope"] = "Global";
+	record["Channel"] = config.value("Channel").toString();
 
-	mDiscover = new Discover(this);
-	//connect(mDiscover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
-	//connect(mDiscover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
+	mDiscover = new Discover(this, Discover::NormalMode, multicastAddress, multicastPort);
+	connect(mDiscover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
+	connect(mDiscover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
+	connect(mDiscover, SIGNAL(gotDatagram(QByteArray,QHostAddress,quint16,QList<Record>)), this, SLOT(gotDatagram(QByteArray,QHostAddress,quint16,QList<Record>)));
 	mDiscover->addRecord(record);
+	//mDiscover->addFilter("Channel", config.value("Channel").toString());
+	mDiscover->addGlobalServer(towerAddress, towerPort);
 	mDiscover->start();
 }
-void DroneFlight::readDatagrams ()
-{/*
+
+QString DroneFlight::checkConfig()
+{
+	Config& config = Config::getSingleton();
+	QString error("Error in DroneConfig.ini [Flight]: ");
+
+	// TODO Read the file ok
+
+	QHostAddress towerAddress(config.value("Tower Address").toString());
+	if (towerAddress.isNull()) return error + "Tower Address: " + config.value("Tower Address").toString();
+
+	quint16 towerPort = config.value("Tower Port").toInt();
+	if (towerPort < 1) return error + "Tower Port: " + config.value("Tower Port").toString();
+
+	QHostAddress multicastAddress(config.value("Multicast Address").toString());
+	if (multicastAddress.isNull()) return error + "Multicast Address: " + config.value("Multicast Address").toString();
+
+	quint16 multicastPort = config.value("Multicast Port").toInt();
+	if (multicastPort < 1) return error + "Multicast Port: " + config.value("Multicast Port").toString();
+
+	int channel = config.value("Channel").toInt();
+	if (channel < 1) return error + "Channel: " + config.value("Channel").toString();
+
+	return "";
+}
+
+/*
 	while (mSocket->hasPendingDatagrams())
 	{
 		// Read datagram
@@ -92,23 +111,29 @@ void DroneFlight::readDatagrams ()
 
 	}
 
-*/}
+*/
 
-void DroneFlight::towerChanged (QHostAddress address, quint16 port)
-{
-	std::cout << "Tower address changed (" << address.toString().toStdString() << ":" << port << ")" << std::endl;
-	//doNetworkStatus();
-}
-void DroneFlight::peerChanged (QHostAddress address, quint16 port)
-{
-	std::cout << "Peer address changed (" << address.toString().toStdString() << ":" << port << ")" << std::endl;
-	//doNetworkStatus();
-}
 
-void DroneFlight::sendDatagram (QByteArray datagram, QString messageType, QHostAddress address, quint16 port)
+
+void DroneFlight::recordFound(Record record)
 {
-	Q_UNUSED(messageType);
 	// TODO
-	//logTrafficOut(messageType, datagram.size());
-	mSocket->writeDatagram(datagram, address, port);
+	Q_UNUSED(record);
+}
+
+void DroneFlight::recordLost(Record record)
+{
+	// TODO
+	Q_UNUSED(record);
+}
+
+void DroneFlight::gotDatagram(QByteArray datagram, QHostAddress sender, quint16 senderPort, QList<Record> matchingRecords)
+{
+	qDebug() << "DroneControl::gotDatagram()" << sender.toString() << senderPort;
+
+	// TODO
+	Q_UNUSED(datagram);
+	Q_UNUSED(sender);
+	Q_UNUSED(senderPort);
+	Q_UNUSED(matchingRecords);
 }

@@ -10,6 +10,8 @@ SOURCES += *.cpp
 
 RESOURCES += qml.qrc
 
+CONFIG   += c++11
+
 # Version
 GIT_VERSION = $$system(git --git-dir $$PWD/../.git --work-tree $$PWD/.. describe --always --tags --long) #  | sed \'s|-|.|g\'
 GIT_VERSION = $$replace(GIT_VERSION, -, .)

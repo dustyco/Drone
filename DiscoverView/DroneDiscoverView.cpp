@@ -8,25 +8,34 @@ DroneDiscoverView::DroneDiscoverView (QObject *parent) : QObject(parent)
 {
 	// Print the version
 	QString version(GIT_VERSION);
-	std::cout << "DroneDiscoverView " << version.toStdString() << std::endl;
+	qDebug() << "DroneDiscoverView" << version;
 
 	// Load the configuration
 	Config& config = Config::getSingleton();
 	config.prefix = "DiscoverView/";
-	quint16 port = config.value("Port").toInt();
-	Q_UNUSED(port);
+	QString configError = checkConfig();
+	if (not configError.isEmpty())
+	{
+		qDebug() << "Config error:" << configError;
+	}
+	QHostAddress towerAddress(config.value("Tower Address").toString());
+	quint16 towerPort = config.value("Tower Port").toInt();
+
+	QHostAddress multicastAddress(config.value("Multicast Address").toString());
+	quint16 multicastPort = config.value("Multicast Port").toInt();
 
 	// Start peer discovery
 	Record record;
 	record["Service"] = "DroneDiscoverView";
 	record["Scope"] = "Global";
 
-	discover = new Discover(this);
-	connect(discover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
-	connect(discover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
-	discover->addRecord(record);
-	discover->addGlobalServer("76.14.48.127");
-	discover->start();
+	mDiscover = new Discover(this, Discover::NormalMode, multicastAddress, multicastPort);
+	connect(mDiscover, SIGNAL(recordFound(Record)), this, SLOT(recordFound(Record)));
+	connect(mDiscover, SIGNAL(recordLost(Record)), this, SLOT(recordLost(Record)));
+	mDiscover->addRecord(record);
+	//mDiscover->addFilter("Channel", config.value("Channel").toString());
+	mDiscover->addGlobalServer(towerAddress, towerPort);
+	mDiscover->start();
 }
 
 QString DroneDiscoverView::version() const
@@ -70,6 +79,28 @@ QString DroneDiscoverView::text () const
 	}
 
 	return ret;
+}
+
+QString DroneDiscoverView::checkConfig()
+{
+	Config& config = Config::getSingleton();
+	QString error("Error in DroneConfig.ini [DiscoverView]: ");
+
+	// TODO Read the file ok
+
+	QHostAddress towerAddress(config.value("Tower Address").toString());
+	if (towerAddress.isNull()) return error + "Tower Address: " + config.value("Tower Address").toString();
+
+	quint16 towerPort = config.value("Tower Port").toInt();
+	if (towerPort < 1) return error + "Tower Port: " + config.value("Tower Port").toString();
+
+	QHostAddress multicastAddress(config.value("Multicast Address").toString());
+	if (multicastAddress.isNull()) return error + "Multicast Address: " + config.value("Multicast Address").toString();
+
+	quint16 multicastPort = config.value("Multicast Port").toInt();
+	if (multicastPort < 1) return error + "Multicast Port: " + config.value("Multicast Port").toString();
+
+	return "";
 }
 
 void DroneDiscoverView::recordFound (Record record)

@@ -20,6 +20,9 @@ public:
 	QString version () const;
 	QString text () const;
 
+private:
+	QString checkConfig(); // Returns an error string, empty indicates no error
+
 signals:
 	void textChanged (QString);
 
@@ -28,7 +31,7 @@ public slots:
 	void recordLost (Record record);
 
 private:
-	Discover* discover;
+	Discover* mDiscover;
 	QMap<Record,int> records;
 };
 

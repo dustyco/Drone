@@ -84,25 +84,90 @@ struct DiscoverResponse
 };
 struct Ping
 {
-    int id;
-    int trips;
+	int id;
+	int trips;
 
-    static QByteArray magic () { return QByteArray("Ping1"); }
-    static Ping decode (const QByteArray& data)
-    {
-        Ping message;
-        QJsonObject json = QJsonDocument::fromBinaryData(data).object();
-        message.id = json["Id"].toDouble();
-        message.trips = json["Trips"].toDouble();
-        return message;
-    }
-    QByteArray encode () const
-    {
-        QJsonObject json;
-        json["Id"] = id;
-        json["Trips"] = trips;
-        return QJsonDocument(json).toBinaryData();
-    }
+	static QByteArray magic () { return QByteArray("Ping1"); }
+	static Ping decode (const QByteArray& data)
+	{
+		Ping message;
+		QJsonObject json = QJsonDocument::fromBinaryData(data).object();
+		message.id = json["Id"].toDouble();
+		message.trips = json["Trips"].toDouble();
+		return message;
+	}
+	QByteArray encode () const
+	{
+		QJsonObject json;
+		json["Id"] = id;
+		json["Trips"] = trips;
+		return QJsonDocument(json).toBinaryData();
+	}
 };
+struct ControlState
+{
+	unsigned char counter;
+	float pitch, yaw, roll, throttle;
+
+	static QByteArray magic () { return QByteArray::fromHex("656B"); } // Decimal: 25963
+	static ControlState decode (const QByteArray& data)
+	{
+		ControlState message;
+		message.counter = 0;
+		message.pitch = message.yaw = message.roll = message.throttle = 0.0f;
+		if (data.size() > 0) message.counter  = data[0];
+		if (data.size() > 1) message.pitch    = float(data[1])/127.0f;
+		if (data.size() > 2) message.yaw      = float(data[2])/127.0f;
+		if (data.size() > 3) message.roll     = float(data[3])/127.0f;
+		if (data.size() > 4) message.throttle = float(data[4])/127.0f;
+		return message;
+	}
+	QByteArray encode () const
+	{
+		QByteArray result;
+		result.append(counter);
+		result.append(char(pitch*127.0f));
+		result.append(char(yaw*127.0f));
+		result.append(char(roll*127.0f));
+		result.append(char(throttle*127.0f));
+		return result;
+	}
+};
+struct MotionState
+{
+	unsigned char counter;
+	double lat, lon; // TODO Global position helper class
+	//float pitch, yaw, roll; // TODO Orientation
+	//Vec3 velocity; // TODO Use vectors
+
+	static QByteArray magic () { return QByteArray::fromHex("656B"); } // Decimal: 25963
+	static MotionState decode (const QByteArray& data)
+	{
+		// TODO
+		Q_UNUSED(data);
+		MotionState message;
+		message.counter = 0;
+//		message.pitch = message.yaw = message.roll = message.throttle = 0.0f;
+//		if (data.size() > 0) message.counter  = data[0];
+//		if (data.size() > 1) message.pitch    = float(data[1])/127.0f;
+//		if (data.size() > 2) message.yaw      = float(data[2])/127.0f;
+//		if (data.size() > 3) message.roll     = float(data[3])/127.0f;
+//		if (data.size() > 4) message.throttle = float(data[4])/127.0f;
+		return message;
+	}
+	QByteArray encode () const
+	{
+		QByteArray result;
+		result.append(counter);
+//		result.append(char(pitch*127.0f));
+//		result.append(char(yaw*127.0f));
+//		result.append(char(roll*127.0f));
+//		result.append(char(throttle*127.0f));
+		return result;
+	}
+};
+
+//MotionState (Lat/Lon Centimeters, Orientation, Velocity)              2 + 8 + 3 + 3 = 16 bytes
+
 
 #endif // MESSAGES_H

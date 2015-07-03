@@ -13,13 +13,15 @@ class DroneFlight : public QObject
 public:
 	explicit DroneFlight (QObject *parent = 0);
 
+private:
+	QString checkConfig(); // Returns an error string, empty indicates no error
+
 signals:
 
 public slots:
-	void readDatagrams ();
-	void towerChanged (QHostAddress address, quint16 port);
-	void peerChanged (QHostAddress address, quint16 port);
-	void sendDatagram (QByteArray datagram, QString messageType, QHostAddress address, quint16 port);
+	void recordFound (Record record);
+	void recordLost (Record record);
+	void gotDatagram (QByteArray datagram, QHostAddress sender, quint16 senderPort, QList<Record> matchingRecords);
 
 private:
     Discover* mDiscover;

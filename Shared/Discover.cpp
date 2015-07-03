@@ -21,13 +21,13 @@ QByteArray makeDatagram (QList<Record> records)
 	return Record::listToBytes(records);
 }
 
-Discover::Discover(QObject *parent, bool serverMode) : QObject(parent)
+Discover::Discover(QObject *parent, Mode mode, QHostAddress multicastAddress, quint16 multicastPort) : QObject(parent)
 {
-	port = 45454;
-	groupAddress = QHostAddress("239.255.43.21");
+	mServerMode = (mode == ServerMode);
+	port = multicastPort;
+	groupAddress = multicastAddress;
 	announcePeriodMsec = 500;
 	running = false;
-	mServerMode = false;
 	announceNeedsResponse = true;
 	departure = false;
 	defaultScope = "Local";
@@ -39,7 +39,6 @@ Discover::Discover(QObject *parent, bool serverMode) : QObject(parent)
 	connect(expireTimer, SIGNAL(timeout()), this, SLOT(expireRecords()));
 
 	// Server mode?
-	mServerMode = serverMode;
 	if (mServerMode)
 	{
 		// Server's don't announce periodically
@@ -78,12 +77,17 @@ Discover::~Discover()
 	running = false;
 }
 
-void Discover::addGlobalServer (QString globalServer)
+void Discover::addGlobalServerParse (QString globalServer)
 {
 	// TODO DNS name resolution
-	QHostAddress address(globalServer);
-	if (address.isNull()) qDebug() << "Broken server name:" << globalServer;
-	else globalServers.insert(address);
+	// TODO Port parsing and default definition
+	addGlobalServer(QHostAddress(globalServer), 45454);
+}
+
+void Discover::addGlobalServer (QHostAddress address, quint16 port)
+{
+	if (address.isNull()) qDebug() << "Discover::addGlobalServer(): Bad server address:" << address;
+	else globalServers.push_back(QPair<QHostAddress,quint16>(address, port));
 
 	// Announce it immediately after returning to event loop
 	if (running and not mServerMode) timer->start(0);
@@ -123,7 +127,44 @@ bool Discover::start ()
 	return true;
 }
 
-void Discover::readDatagrams()
+bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::SendMode sendMode)
+{
+	Q_UNUSED(sendMode); // TODO
+
+	QList<Record> matchingRecords;
+
+	// Filter found records that only match this one
+	for (Record record : ownedRecords)
+	{
+		bool useRecord = true;
+		for (const QString& key : filter.keys())
+		{
+			if (!record.has(key) or record[key] != filter[key])
+			{
+				useRecord = false;
+				break;
+			}
+		}
+		if (useRecord) matchingRecords.append(record);
+	}
+	if (matchingRecords.empty()) return false;
+
+	// Send to these records
+	// TODO Use SendMode
+	for (Record record : matchingRecords)
+	{
+		// Get address
+		QHostAddress address(record["Address"]);
+		bool ok = false;
+		quint16 port = record["Port"].toInt(&ok);
+
+		// TODO Iterate multicast sockets to see if one of those are it
+		globalSocket->writeDatagram(datagram, address, port);
+	}
+	return true;
+}
+
+void Discover::readDatagrams ()
 {
 	QUdpSocket* socket = qobject_cast<QUdpSocket*>(QObject::sender());
 	if (socket)
@@ -139,10 +180,22 @@ void Discover::readDatagrams()
 		// Check the prefix
 		bool respond = false;
 		bool removeThem = false;
-			 if (datagram.startsWith("DSDA")) respond = false; // Announcement, do not respond
+		if (datagram.startsWith("DSDA")) respond = false; // Announcement, do not respond
 		else if (datagram.startsWith("DSDR")) respond = true; // Request, do respond
 		else if (datagram.startsWith("DSDD")) removeThem = true; // This is a departure, remove records following
-		else continue; // Ignore it
+		else
+		{
+			// This datagram isn't written for Discover, pass it on
+			QList<Record> matchingRecords;
+			for (Record record : foundRecords.keys())
+			{
+				if (record.has("Address") and record["Address"]==sender.toString())
+				if (record.has("Port") and record["Port"]==QString::number(senderPort))
+					matchingRecords.append(record);
+			}
+			emit gotDatagram(datagram, sender, senderPort, matchingRecords);
+			continue;
+		}
 		datagram.remove(0, 4);
 
 		// Determine the scope of the sender
@@ -202,11 +255,11 @@ void Discover::announceRecords ()
 		if (departure) datagram = "DSDD";
 		datagram += makeDatagram(recordsToSend);
 
-		// TODO Send to each Global server
-		for (QHostAddress globalServer : globalServers)
+		// Send to each Global server
+		for (QPair<QHostAddress,quint16> globalServer : globalServers)
 		{
 			//qDebug() << "Sending to" << globalServer;
-			globalSocket->writeDatagram(datagram, globalServer, port);
+			globalSocket->writeDatagram(datagram, globalServer.first, globalServer.second);
 		}
 	}
 
@@ -236,8 +289,8 @@ void Discover::announceRecords ()
 				// Add it to addressEntryCache if necessary for local scope testing
 				if (not addressEntryCache.contains(entry)) addressEntryCache.push_back(entry);
 
-				// TODO Multicast
-				if (iface.flags().testFlag(QNetworkInterface::CanMulticast) and !entry.ip().isNull())
+				// Multicast
+				if (iface.flags().testFlag(QNetworkInterface::CanMulticast) and !entry.ip().isNull() and !entry.ip().isLoopback())
 				{
 					// Create the socket if it doesn't exit yet
 					if (not multiSocket.contains(entry.ip().toString()))

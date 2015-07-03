@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
 
-    qmlRegisterType<DroneDiscoverView>("Drone", 1, 0, "DroneControl");
+	qmlRegisterType<DroneControl>("Drone", 1, 0, "DroneControl");
 
     QGuiApplication app(argc, argv);
 

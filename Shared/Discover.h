@@ -30,17 +30,13 @@ class Discover : public QObject
 	Q_OBJECT
 
 public:
-	explicit Discover (QObject *parent = 0, bool serverMode = false);
-	~Discover ();
-	void addGlobalServer (QString globalServer);
-	void addFilter (QString key, QString value);
-	void addRecord (Record record);
-	void setGlobalServerMode (bool b);
-	bool start ();
+	enum Mode { ServerMode, NormalMode };
+	enum SendMode { AllRoutes };
 
 signals:
 	void recordFound (Record record);
 	void recordLost (Record record);
+	void gotDatagram (QByteArray datagram, QHostAddress sender, quint16 senderPort, QList<Record> matchingRecords);
 	void status (QString status);
 
 private slots:
@@ -48,6 +44,17 @@ private slots:
 	void announceRecords ();
 	void expireRecords ();
 	void acceptRecords (QList<Record> records, bool removeThem, QString senderScope, QString senderAddress, QString senderPort);
+
+public:
+	explicit Discover (QObject *parent = 0, Mode mode = NormalMode, QHostAddress multicastAddress = QHostAddress(), quint16 multicastPort = 0);
+	~Discover ();
+	void addGlobalServerParse (QString globalServer);
+	void addGlobalServer (QHostAddress address, quint16 port);
+	void addFilter (QString key, QString value);
+	void addRecord (Record record);
+	void setGlobalServerMode (bool b);
+	bool start ();
+	bool sendDatagramTo (QByteArray datagram, Record filter, SendMode sendMode = AllRoutes);
 
 private:
 	bool passesFilters (Record record);
@@ -71,7 +78,7 @@ private:
 	QMap<QString, QUdpSocket*> multiSocket;
 	QList<QNetworkAddressEntry> addressEntryCache;
 	QMap<QString, QString> filters;
-	QSet<QHostAddress> globalServers;
+	QList<QPair<QHostAddress, quint16> > globalServers;
 };
 
 #endif // DISCOVER_H

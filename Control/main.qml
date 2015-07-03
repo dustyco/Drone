@@ -28,7 +28,7 @@ Window {
 
 
     Image {
-        source: "http://i.ytimg.com/vi/H5Po0gwuFqY/maxresdefault.jpg"
+        //source: "http://i.ytimg.com/vi/H5Po0gwuFqY/maxresdefault.jpg"
         anchors.fill: parent
     }
 

@@ -7,3 +7,21 @@ Discover bugs
 - Windows, same host multicast messages come back from different IP, [expected 10.0.1.39] [got 169.254.80.80]
 
 - #BUG1 Android, reset iface while running, sometimes momentarily sees local hosts as global because at that time the iface isn't enumerated, cache
+
+- Immediate departure messages are only sent to found record senders, but some peers may not advertise themselves, cache requesters as well
+
+
+Streaming Messages
+    ControlState (Sequence, Pitch, Yaw, Roll, Throttle)                   2 + 1 + 4 = 7 bytes
+    MotionState (Coordinate ID, Centimeter Offset, Orientation, Velocity) 2 + 1 + 4 + 3 + 3 = 13 bytes
+    MotionState (Lat/Lon Centimeters, Orientation, Velocity)              2 + 8 + 3 + 3 = 16 bytes
+    Video
+
+Event Messages (Repeat until ACK)
+    Control Use mode (Manual,
+    Control Follow path
+    Control Map update
+    Control Restart
+
+    Flight  Mode switch
+    Flight  Follow path
