@@ -13,7 +13,7 @@ Window {
     width: 640
     height: 480
 
-    property real em: (width+height)/50
+    property real em: (width+height)/75
 
     DroneControl {
         id: control
@@ -28,7 +28,7 @@ Window {
 
 
     Image {
-        //source: "http://i.ytimg.com/vi/H5Po0gwuFqY/maxresdefault.jpg"
+        source: "http://i.ytimg.com/vi/H5Po0gwuFqY/maxresdefault.jpg"
         anchors.fill: parent
     }
 
@@ -47,12 +47,12 @@ Window {
 
             Text {
                 x: 50
-                text: control.networkStatus
-                font.family: "monospace"
+                text: control.info
+                font.family: "sans"
                 font.pixelSize: em*1
                 color: "black"
             }
-
+               /*
             Text {
                 x: 50
                 text: "Traffic: " + Math.round(control.traffic/1000) + " KB"
@@ -60,6 +60,7 @@ Window {
                 font.pixelSize: em*1
                 color: "black"
             }
+            */
         }
 
     }

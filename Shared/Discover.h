@@ -55,6 +55,7 @@ public:
 	void setGlobalServerMode (bool b);
 	bool start ();
 	bool sendDatagramTo (QByteArray datagram, Record filter, SendMode sendMode = AllRoutes);
+	bool sendDatagramTo (QByteArray datagram, QHostAddress address, quint16 port);
 
 private:
 	bool passesFilters (Record record);

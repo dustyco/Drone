@@ -13,10 +13,12 @@
 
 QByteArray makeDatagram (QList<Record> records)
 {
-	// TODO Compress reserved names (and uncompress elsewhere)
+	// Remove Scope because it will be changed on receipt anyway
+	// Compress reserved names
 	for (Record& record : records)
 	{
 		record.remove("Scope");
+		Record::compressReserved(record);
 	}
 	return Record::listToBytes(records);
 }
@@ -130,11 +132,12 @@ bool Discover::start ()
 bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::SendMode sendMode)
 {
 	Q_UNUSED(sendMode); // TODO
+	//qDebug() << "Sending datagram of size" << datagram.size() << "to" << filter.toString();
 
 	QList<Record> matchingRecords;
 
 	// Filter found records that only match this one
-	for (Record record : ownedRecords)
+	for (Record record : foundRecords.keys())
 	{
 		bool useRecord = true;
 		for (const QString& key : filter.keys())
@@ -158,10 +161,16 @@ bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::Sen
 		bool ok = false;
 		quint16 port = record["Port"].toInt(&ok);
 
-		// TODO Iterate multicast sockets to see if one of those are it
-		globalSocket->writeDatagram(datagram, address, port);
+		//qDebug() << "    Route:" << address.toString() << port;
+		sendDatagramTo(datagram, address, port);
 	}
 	return true;
+}
+
+bool Discover::sendDatagramTo(QByteArray datagram, QHostAddress address, quint16 port)
+{
+	// TODO Iterate multicast sockets to see if one of those are it
+	globalSocket->writeDatagram(datagram, address, port);
 }
 
 void Discover::readDatagrams ()

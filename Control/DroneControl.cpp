@@ -1,6 +1,7 @@
 
 
 #include "DroneControl.h"
+#include "../Shared/Messages.h"
 #include <QCoreApplication>
 
 DroneControl::DroneControl(QObject* parent) : QObject(parent)
@@ -23,10 +24,15 @@ DroneControl::DroneControl(QObject* parent) : QObject(parent)
 	QHostAddress multicastAddress(config.value("Multicast Address").toString());
 	quint16 multicastPort = config.value("Multicast Port").toInt();
 
-	i = 0;
-	mTraffic = 0;
-	mPing = 0;
+	// Cache a copy of the flight filter for speed and ease
+	// So it doesn't need to be created for every outgoing message
+	mFlightFilter["Service"] = "DroneFlight";
+	mFlightFilter["Channel"] = config.value("Channel").toString();
 
+	// Set up pinging
+	mPingCounter = 0;
+	mPingTimer = new QTimer(this);
+	connect(mPingTimer, SIGNAL(timeout()), this, SLOT(sendPing()));
 
 	// Start peer discovery
 	Record record;
@@ -44,19 +50,19 @@ DroneControl::DroneControl(QObject* parent) : QObject(parent)
 	mDiscover->start();
 }
 
-long DroneControl::traffic() const { return mTraffic; }
+QString DroneControl::info() const {
+	QString _info;
 
-long DroneControl::ping() const { return mPing; }
-
-QString DroneControl::networkStatus() const { return mNetworkStatus; }
-
-void DroneControl::setNetworkStatus(QString networkStatus)
-{
-	if (networkStatus != mNetworkStatus)
+	// Print the Flight descriptions
+	_info += "Flight:\n";
+	for (QString description : mFlightDescriptions)
 	{
-		mNetworkStatus = networkStatus;
-		emit networkStatusChanged(mNetworkStatus);
+		_info += "  ";
+		_info += description;
+		_info += "\n";
 	}
+
+	return _info;
 }
 
 qreal DroneControl::frameTrigger() const { return 0; }
@@ -95,27 +101,54 @@ QString DroneControl::checkConfig()
 	return "";
 }
 
+void DroneControl::sendPing()
+{
+	Ping ping;
+	ping.id = mPingCounter++;
+	ping.trips = 1;
+	mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), mFlightFilter);
+}
+
 void DroneControl::recordFound(Record record)
 {
-	// TODO
-	Q_UNUSED(record);
+	Config& config = Config::getSingleton();
+	if (record["Service"]=="DroneFlight" and record["Channel"]==config.value("Channel"))
+	{
+		QString description = record["Address"] + ":" + record["Port"];
+		qDebug() << "Found DroneFlight:" << description;
+		mFlightDescriptions.insert(description);
+
+		// Ping
+		mPingTimer->start(500);
+
+		emit infoChanged(info());
+	}
 }
 
 void DroneControl::recordLost(Record record)
 {
-	// TODO
-	Q_UNUSED(record);
+	Config& config = Config::getSingleton();
+	QString description = record["Address"] + ":" + record["Port"];
+	qDebug() << "Lost DroneFlight:" << description;
+	mFlightDescriptions.remove(description);
+	emit infoChanged(info());
 }
 
 void DroneControl::gotDatagram(QByteArray datagram, QHostAddress sender, quint16 senderPort, QList<Record> matchingRecords)
 {
-	qDebug() << "DroneControl::gotDatagram()" << sender.toString() << senderPort;
-
-	// TODO
-	Q_UNUSED(datagram);
-	Q_UNUSED(sender);
-	Q_UNUSED(senderPort);
 	Q_UNUSED(matchingRecords);
+
+	if (isMessage<Ping>(datagram))
+	{
+		Ping ping = decodeMessage<Ping>(datagram);
+		if (ping.trips > 0 and ping.trips < 3)
+		{
+			++ping.trips;
+			qDebug() << "Responding to ping #" << ping.id << "from" << sender.toString() << senderPort;
+			mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), sender, senderPort);
+		}
+	}
+	else qDebug() << "DroneFlight::gotDatagram() of size" << datagram.size() << "from" << sender.toString() << senderPort;
 }
 
 /*

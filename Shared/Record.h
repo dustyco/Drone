@@ -46,7 +46,7 @@ public:
 
 private:
 	static Record fromJson (const QJsonObject &json);
-	static QJsonObject toJson (const Record& record);
+	static QJsonObject toJson (Record record);
 
 private:
 	QMap<QString,QString> data;

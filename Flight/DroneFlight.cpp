@@ -129,11 +129,17 @@ void DroneFlight::recordLost(Record record)
 
 void DroneFlight::gotDatagram(QByteArray datagram, QHostAddress sender, quint16 senderPort, QList<Record> matchingRecords)
 {
-	qDebug() << "DroneControl::gotDatagram()" << sender.toString() << senderPort;
-
-	// TODO
-	Q_UNUSED(datagram);
-	Q_UNUSED(sender);
-	Q_UNUSED(senderPort);
 	Q_UNUSED(matchingRecords);
+
+	if (isMessage<Ping>(datagram))
+	{
+		Ping ping = decodeMessage<Ping>(datagram);
+		if (ping.trips > 0 and ping.trips < 3)
+		{
+			++ping.trips;
+			qDebug() << "Responding to ping #" << ping.id << "from" << sender.toString() << senderPort;
+			mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), sender, senderPort);
+		}
+	}
+	else qDebug() << "DroneFlight::gotDatagram() of size" << datagram.size() << "from" << sender.toString() << senderPort;
 }

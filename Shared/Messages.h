@@ -91,7 +91,7 @@ struct Ping
 	static Ping decode (const QByteArray& data)
 	{
 		Ping message;
-		QJsonObject json = QJsonDocument::fromBinaryData(data).object();
+		QJsonObject json = QJsonDocument::fromJson(data).object();
 		message.id = json["Id"].toDouble();
 		message.trips = json["Trips"].toDouble();
 		return message;
@@ -101,7 +101,7 @@ struct Ping
 		QJsonObject json;
 		json["Id"] = id;
 		json["Trips"] = trips;
-		return QJsonDocument(json).toBinaryData();
+		return QJsonDocument(json).toJson(QJsonDocument::Compact);
 	}
 };
 struct ControlState

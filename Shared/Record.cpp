@@ -82,6 +82,8 @@ QByteArray Record::listToBytes (const QList<Record>& records)
 * Instance _In
 * Hostname _Ho
 * Service  _Se
+* Machine  _Ma
+* Channel  _Ch
 */
 void Record::compressReserved (Record& record)
 {
@@ -91,6 +93,8 @@ void Record::compressReserved (Record& record)
 	if (record.has("Instance")) { record["_In"] = record["Instance"]; record.remove("Instance"); }
 	if (record.has("Hostname")) { record["_Ho"] = record["Hostname"]; record.remove("Hostname"); }
 	if (record.has("Service")) { record["_Se"] = record["Service"]; record.remove("Service"); }
+	if (record.has("Machine")) { record["_Ma"] = record["Machine"]; record.remove("Machine"); }
+	if (record.has("Channel")) { record["_Ch"] = record["Channel"]; record.remove("Channel"); }
 }
 
 void Record::decompressReserved (Record& record)
@@ -101,6 +105,8 @@ void Record::decompressReserved (Record& record)
 	if (record.has("_In")) { record["Instance"] = record["_In"]; record.remove("_In"); }
 	if (record.has("_Ho")) { record["Hostname"] = record["_Ho"]; record.remove("_Ho"); }
 	if (record.has("_Se")) { record["Service"] = record["_Se"]; record.remove("_Se"); }
+	if (record.has("_Ma")) { record["Machine"] = record["_Ma"]; record.remove("_Ma"); }
+	if (record.has("_Ch")) { record["Channel"] = record["_Ch"]; record.remove("_Ch"); }
 }
 
 QString Record::toString () const
@@ -125,7 +131,7 @@ Record Record::fromJson (const QJsonObject& json)
 	return record;
 }
 
-QJsonObject Record::toJson (const Record& record)
+QJsonObject Record::toJson (Record record)
 {
 	QJsonObject json;
 	for (QString key : record.keys())
