@@ -61,9 +61,9 @@ Discover::Discover(QObject *parent, Mode mode, QHostAddress multicastAddress, qu
 //	}
 
 	// Global socket
-	// TODO Server socket has a fixed IP
 	globalSocket = new QUdpSocket(this);
 	connect(globalSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
+	if (mServerMode) qDebug() << "Discover global server mode on port" << port;
 	if (not globalSocket->bind(QHostAddress::AnyIPv4, mServerMode?port:0))
 	{
 		qDebug() << "Error binding globalSocket:" << globalSocket->errorString();

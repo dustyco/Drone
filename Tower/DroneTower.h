@@ -11,6 +11,9 @@ class DroneTower : public QObject
 public:
 		explicit DroneTower (QObject *parent = 0);
 
+private:
+	QString checkConfig(); // Returns an error string, empty indicates no error
+
 signals:
 
 public slots:
