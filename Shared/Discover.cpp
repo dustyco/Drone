@@ -228,8 +228,8 @@ void Discover::readDatagrams ()
 			//qDebug() << "Responding:" << QByteArray("DSDA")+makeDatagram(ownedRecords) << "Address:" << sender.toString() << senderPort;
 			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords), sender, senderPort);
 		}
-		// Server: Respond to only Global requests with owned and found Records
-		else if (respond and mServerMode and scope=="Global")
+		// Server: Respond to all requests with owned and found Records
+		else if (respond and mServerMode)
 		{
 			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords + foundRecords.keys()), sender, senderPort);
 		}
