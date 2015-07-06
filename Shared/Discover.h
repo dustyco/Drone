@@ -61,6 +61,7 @@ public:
 private:
 	bool passesFilters (Record record);
 	bool addressIsLocal (QHostAddress address);
+	QByteArray makeDatagram (QList<Record> records);
 	
 private:
 	QString defaultScope;

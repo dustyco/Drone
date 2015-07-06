@@ -11,18 +11,6 @@
 // Server: Forwards new global records to all global peers
 // Both modes: Broadcasts departure directly to global peers (test without global server forwarding)
 
-QByteArray makeDatagram (QList<Record> records)
-{
-	// Remove Scope because it will be changed on receipt anyway
-	// Compress reserved names
-	for (Record& record : records)
-	{
-		record.remove("Scope");
-		Record::compressReserved(record);
-	}
-	return Record::listToBytes(records);
-}
-
 Discover::Discover(QObject *parent, Mode mode, QHostAddress multicastAddress, quint16 multicastPort) : QObject(parent)
 {
 	mServerMode = (mode == ServerMode);
@@ -177,7 +165,7 @@ bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::Sen
 
 bool Discover::sendDatagramTo(QByteArray datagram, QHostAddress address, quint16 port)
 {
-	if (addressIsLocal(address))
+	if (false and addressIsLocal(address))
 	{
 		// Iterate multicast sockets
 		for (QUdpSocket* socket : multiSocket.values())
@@ -375,7 +363,24 @@ void Discover::expireRecords ()
 			// It's expired
 			qDebug() << "Lost Record:" << pair.first.toString();
 			foundRecords.remove(pair.first);
+
+			// Notify this app
 			emit recordLost(pair.first);
+
+			// Server: Forward global departures to other global peers
+			if (mServerMode)
+			{
+				QByteArray datagram("DSDD");
+				datagram += makeDatagram(QList<Record>({pair.first}));
+
+				for (Record& record : foundRecords.keys())
+				if (record["Scope"] == "Global")
+				{
+					bool ok;
+					globalSocket->writeDatagram(datagram, QHostAddress(record["Address"]), record["Port"].toUInt(&ok, 10));
+				}
+			}
+
 		}
 		else if (delta < next) next = delta; // Set the timer for this one
 	}
@@ -489,6 +494,22 @@ bool Discover::addressIsLocal(QHostAddress address)
 		}
 	}
 	return false;
+}
+
+QByteArray Discover::makeDatagram (QList<Record> records)
+{
+	for (Record& record : records)
+	{
+		// Remove Scope because it will be changed on receipt anyway
+		record.remove("Scope");
+
+		// Inject main socket's port number if necessary
+		if (globalSocket and !record.has("Port")) record["Port"] = QString::number(globalSocket->localPort());
+
+		// Compress reserved names
+		Record::compressReserved(record);
+	}
+	return Record::listToBytes(records);
 }
 
 
