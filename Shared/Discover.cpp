@@ -370,8 +370,11 @@ void Discover::expireRecords ()
 			// Server: Forward global departures to other global peers
 			if (mServerMode)
 			{
+				QList<Record> recordInListForm;
+				recordInListForm.append(pair.first);
+
 				QByteArray datagram("DSDD");
-				datagram += makeDatagram(QList<Record>({pair.first}));
+				datagram += makeDatagram(recordInListForm);
 
 				for (Record& record : foundRecords.keys())
 				if (record["Scope"] == "Global")
