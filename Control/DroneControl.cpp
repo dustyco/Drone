@@ -3,6 +3,7 @@
 #include "DroneControl.h"
 #include "../Shared/Messages.h"
 #include <QCoreApplication>
+#include <QDateTime>
 
 DroneControl::DroneControl(QObject* parent) : QObject(parent)
 {
@@ -106,6 +107,7 @@ void DroneControl::sendPing()
 	Ping ping;
 	ping.id = mPingCounter++;
 	ping.trips = 1;
+	mPingTimes[ping.id] = QDateTime::currentMSecsSinceEpoch();
 	mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), mFlightFilter);
 }
 
@@ -141,12 +143,32 @@ void DroneControl::gotDatagram(QByteArray datagram, QHostAddress sender, quint16
 	if (isMessage<Ping>(datagram))
 	{
 		Ping ping = decodeMessage<Ping>(datagram);
-		if (ping.trips > 0 and ping.trips < 3)
+
+		/*if (ping.trips > 0 and ping.trips < 3)
 		{
 			++ping.trips;
 			qDebug() << "Responding to ping #" << ping.id << "from" << sender.toString() << senderPort;
 			mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), sender, senderPort);
+		}*/
+
+		if (ping.trips == 2)
+		{
+			// Calculate time delta
+			if (mPingTimes.contains(ping.id))
+			{
+				qint64 dt = QDateTime::currentMSecsSinceEpoch() - mPingTimes[ping.id];
+				mPingTimes.remove(ping.id);
+				qDebug() << dt << "ms ping #" << ping.id << "from" << sender.toString() << senderPort;
+			}
+
+			// TODO Remove old pings
+			//for (qint64 id : mPingTimes.keys())
+
+			// Respond
+			++ping.trips;
+			mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), sender, senderPort);
 		}
+		else qDebug() << "Unexpected ping #" << ping.id << "with" << ping.trips << "trips from" << sender.toString() << senderPort;
 	}
 	else qDebug() << "DroneFlight::gotDatagram() of size" << datagram.size() << "from" << sender.toString() << senderPort;
 }

@@ -43,6 +43,7 @@ private:
 	QSet<QString> mFlightDescriptions;
 	int mPingCounter;
 	QTimer* mPingTimer;
+	QMap<qint64, qint64> mPingTimes;
 };
 
 #endif // DRONECONTROL_H
