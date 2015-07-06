@@ -108,7 +108,6 @@ void Discover::addRecord (Record record)
 	record["Machine"] = Identity::basedOnInterfaces();
 
 	// These will be announced or given in responses
-	// TODO Instance UUID injection and maybe other reserved values
 	ownedRecords.push_back(record);
 	
 	qDebug() << "Owned record:" << record.toString();
@@ -169,8 +168,13 @@ bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::Sen
 
 bool Discover::sendDatagramTo(QByteArray datagram, QHostAddress address, quint16 port)
 {
-	// TODO Iterate multicast sockets to see if one of those are it
-	globalSocket->writeDatagram(datagram, address, port);
+	if (addressIsLocal(address))
+	{
+		// Iterate multicast sockets
+		for (QUdpSocket* socket : multiSocket.values())
+			socket->writeDatagram(datagram, address, port);
+	}
+	else globalSocket->writeDatagram(datagram, address, port);
 }
 
 void Discover::readDatagrams ()
@@ -380,7 +384,24 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 	{
 		// Preprocess the record before considering it
 		Record::decompressReserved(record);
-		record["Scope"] = senderScope; // No reason for the sender to ever include this
+
+		// Set the scope based on the address if included, otherwise scope of sender
+		QHostAddress recordAddress;
+		if (record.has("Address")) recordAddress.setAddress(record["Address"]);
+		if (recordAddress.protocol()!=QAbstractSocket::IPv4Protocol) recordAddress = QHostAddress::Null;
+		if (recordAddress==QHostAddress::Broadcast) recordAddress = QHostAddress::Null;
+		if (recordAddress==QHostAddress::AnyIPv4) recordAddress = QHostAddress::Null;
+		if (recordAddress.isNull())
+		{
+			record["Scope"] = senderScope;
+		}
+		else
+		{
+				 if (recordAddress.isLoopback())    record["Scope"] = "Loopback";
+			else if (addressIsLocal(recordAddress)) record["Scope"] = "Local";
+			else                                    record["Scope"] = "Global";
+		}
+
 		if (record["Address"].isEmpty()) record["Address"] = senderAddress; // Sender may override these
 		if (record["Port"].isEmpty()) record["Port"] = senderPort; // Sender may override these
 		// TODO Extract a custom expiration duration so each record can have its own
@@ -444,7 +465,6 @@ bool Discover::passesFilters (Record record)
 
 bool Discover::addressIsLocal(QHostAddress address)
 {
-
 	quint32 senderInt = address.toIPv4Address();
 	for (auto entry : addressEntryCache)
 	if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol)
@@ -459,7 +479,6 @@ bool Discover::addressIsLocal(QHostAddress address)
 			return true;
 		}
 	}
-
 	return false;
 }
 

@@ -3,8 +3,8 @@ TEMPLATE = app
 QT += qml quick network widgets
 
 
-HEADERS += ../Shared/*.h
-SOURCES += ../Shared/*.cpp
+HEADERS += $$PWD/../Shared/*.h
+SOURCES += $$PWD/../Shared/*.cpp
 HEADERS += *.h
 SOURCES += *.cpp
 
