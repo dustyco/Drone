@@ -12,6 +12,9 @@ class DroneFind : public QObject
 public:
 	explicit DroneFind (QObject *parent = 0);
 
+private:
+	QString checkConfig(); // Returns an error string, empty indicates no error
+
 signals:
 
 public slots:

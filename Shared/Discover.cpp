@@ -116,6 +116,15 @@ void Discover::addRecord (Record record)
 	if (running and not mServerMode) timer->start(0);
 }
 
+
+void Discover::setDefaultScope (QString scope)
+{
+	defaultScope = scope;
+
+	// Announce immediately after returning to event loop
+	if (running and not mServerMode) timer->start(0);
+}
+
 bool Discover::start ()
 {
 	// TODO Return false if there's an error

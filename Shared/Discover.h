@@ -53,6 +53,7 @@ public:
 	void addFilter (QString key, QString value);
 	void addRecord (Record record);
 	void setGlobalServerMode (bool b);
+	void setDefaultScope (QString scope); // Needed to request global records without owning any
 	bool start ();
 	bool sendDatagramTo (QByteArray datagram, Record filter, SendMode sendMode = AllRoutes);
 	bool sendDatagramTo (QByteArray datagram, QHostAddress address, quint16 port);
