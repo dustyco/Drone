@@ -227,12 +227,12 @@ void Discover::readDatagrams ()
 		if (respond and not mServerMode and (scope=="Local" or scope=="Loopback"))
 		{
 			//qDebug() << "Responding:" << QByteArray("DSDA")+makeDatagram(ownedRecords) << "Address:" << sender.toString() << senderPort;
-			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords), sender, senderPort);
+			globalSocket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords, true), sender, senderPort);
 		}
 		// Server: Respond to only global requests with owned and found Records
 		else if (respond and mServerMode and scope=="Global")
 		{
-			socket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords + foundRecords.keys()), sender, senderPort);
+			globalSocket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords + foundRecords.keys(), false), sender, senderPort);
 		}
 	}
 }
@@ -263,7 +263,7 @@ void Discover::announceRecords ()
 		// This is a discovery request which should be responded to
 		QByteArray datagram("DSDR");
 		if (departure) datagram = "DSDD";
-		datagram += makeDatagram(recordsToSend);
+		datagram += makeDatagram(recordsToSend, false);
 
 		// Send to each Global server
 		for (QPair<QHostAddress,quint16> globalServer : globalServers)
@@ -286,7 +286,7 @@ void Discover::announceRecords ()
 		QByteArray datagram("DSDA");
 		if (announceNeedsResponse) datagram = "DSDR";
 		if (departure)             datagram = "DSDD";
-		datagram += makeDatagram(recordsToSend);
+		datagram += makeDatagram(recordsToSend, true);
 
 		// For each interface
 		for (auto iface : QNetworkInterface::allInterfaces())
@@ -340,7 +340,7 @@ void Discover::announceRecords ()
 		QByteArray datagram("DSDA");
 		if (announceNeedsResponse) datagram = "DSDR";
 		if (departure)             datagram = "DSDD";
-		datagram += makeDatagram(recordsToSend);
+		datagram += makeDatagram(recordsToSend, true);
 
 		// Loopback
 		//loopbackSocket->writeDatagram(datagram, QHostAddress::LocalHost, port);
@@ -374,7 +374,7 @@ void Discover::expireRecords ()
 				recordInListForm.append(pair.first);
 
 				QByteArray datagram("DSDD");
-				datagram += makeDatagram(recordInListForm);
+				datagram += makeDatagram(recordInListForm, false);
 
 				for (Record& record : foundRecords.keys())
 				if (record["Scope"] == "Global")
@@ -454,7 +454,7 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 	if (mServerMode and removeThem and senderScope == "Global")
 	{
 		QByteArray datagram("DSDD");
-		datagram += makeDatagram(records);
+		datagram += makeDatagram(records, false);
 		
 		for (Record& record : foundRecords.keys())
 		if (record["Scope"] == "Global")
@@ -499,7 +499,7 @@ bool Discover::addressIsLocal(QHostAddress address)
 	return false;
 }
 
-QByteArray Discover::makeDatagram (QList<Record> records)
+QByteArray Discover::makeDatagram (QList<Record> records, bool injectPort)
 {
 	for (Record& record : records)
 	{
@@ -507,7 +507,7 @@ QByteArray Discover::makeDatagram (QList<Record> records)
 		record.remove("Scope");
 
 		// Inject main socket's port number if necessary
-		if (globalSocket and !record.has("Port")) record["Port"] = QString::number(globalSocket->localPort());
+		if (injectPort and globalSocket and !record.has("Port")) record["Port"] = QString::number(globalSocket->localPort());
 
 		// Compress reserved names
 		Record::compressReserved(record);

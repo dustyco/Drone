@@ -104,6 +104,7 @@ QString DroneControl::checkConfig()
 
 void DroneControl::sendPing()
 {
+	mPingTimer->start(500);
 	Ping ping;
 	ping.id = mPingCounter++;
 	ping.trips = 1;
@@ -121,19 +122,33 @@ void DroneControl::recordFound(Record record)
 		mFlightDescriptions.insert(description);
 
 		// Ping
-		mPingTimer->start(500);
+		mPingTimer->start(0);
 
 		emit infoChanged(info());
+	}
+	if (record["Service"]=="DroneTower")
+	{
+		QString description = record["Address"] + ":" + record["Port"];
+		qDebug() << "Found DroneTower:" << description;
 	}
 }
 
 void DroneControl::recordLost(Record record)
 {
 	Config& config = Config::getSingleton();
-	QString description = record["Address"] + ":" + record["Port"];
-	qDebug() << "Lost DroneFlight:" << description;
-	mFlightDescriptions.remove(description);
-	emit infoChanged(info());
+	if (record["Service"]=="DroneFlight" and record["Channel"]==config.value("Channel"))
+	{
+		QString description = record["Address"] + ":" + record["Port"];
+		qDebug() << "Lost DroneFlight:" << description;
+		mFlightDescriptions.remove(description);
+
+		emit infoChanged(info());
+	}
+	if (record["Service"]=="DroneTower")
+	{
+		QString description = record["Address"] + ":" + record["Port"];
+		qDebug() << "Lost DroneTower:" << description;
+	}
 }
 
 void DroneControl::gotDatagram(QByteArray datagram, QHostAddress sender, quint16 senderPort, QList<Record> matchingRecords)
