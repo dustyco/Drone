@@ -8,8 +8,9 @@
 #include <../Shared/Discover.h>
 #include <../Shared/Messages.h>
 #include <../Shared/Config.h>
+#include <../Shared/Logger.h>
 
-class DroneControl : public QObject
+class DroneControl : public QObject, public Logger
 {
 	Q_OBJECT
 	Q_PROPERTY(QString info READ info NOTIFY infoChanged)
@@ -26,6 +27,7 @@ public:
 
 signals:
 	void infoChanged (QString);
+	void logSignal (const QString& tag, const QString& level, const QString& text);
 
 public slots:
 	void recordFound (Record record);

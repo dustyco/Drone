@@ -4,16 +4,19 @@
 #include <QDebug>
 #include <QSettings>
 #include <QDir>
+#include "../Shared/Logger.h"
 
-class Config
+class Config : public Logger
 {
 public:
     Config ()
     {
+		setLoggerTag("Config");
+
         QString path = QDir::homePath() + "/DroneConfig.ini";
 		mSettings = new QSettings(path, QSettings::IniFormat);
 		//std::cout << "Loading config from: " << mSettings->fileName().toStdString() << std::endl;
-		qDebug() << "Loading config from" << mSettings->fileName();
+		logInfo(QString("Loading config from %1").arg(mSettings->fileName()));
     }
     ~Config ()
     {

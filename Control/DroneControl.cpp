@@ -7,9 +7,13 @@
 
 DroneControl::DroneControl(QObject* parent) : QObject(parent)
 {
+	// Connect the logger
+	connect(&globalLogger, SIGNAL(logSignal(QString,QString,QString)), this, SIGNAL(logSignal(QString,QString,QString)));
+	setLoggerTag("Main");
+
 	// Print the version
 	QString version(GIT_VERSION);
-	qDebug() << "DroneControl" << version;
+	logInfo(QString("DroneControl %1").arg(version));
 
 	// Load the configuration
 	Config& config = Config::getSingleton();
@@ -17,7 +21,7 @@ DroneControl::DroneControl(QObject* parent) : QObject(parent)
 	QString configError = checkConfig();
 	if (not configError.isEmpty())
 	{
-		qDebug() << "Config error:" << configError;
+		logWarning(QString("Config error: %1").arg(configError));
 	}
 	QHostAddress towerAddress(config.value("Tower Address").toString());
 	quint16 towerPort = config.value("Tower Port").toInt();
@@ -82,6 +86,8 @@ QString DroneControl::checkConfig()
 	Config& config = Config::getSingleton();
 	QString error("Error in DroneConfig.ini [Control]: ");
 
+	emit logSignal("Tag", "Level", "Text blah text blah");
+
 	// TODO Read the file ok
 
 	QHostAddress towerAddress(config.value("Tower Address").toString());
@@ -118,7 +124,7 @@ void DroneControl::recordFound(Record record)
 	if (record["Service"]=="DroneFlight" and record["Channel"]==config.value("Channel"))
 	{
 		QString description = record["Address"] + ":" + record["Port"];
-		qDebug() << "Found DroneFlight:" << description;
+		logInfo(QString("Found DroneFlight: %1").arg(description));
 		mFlightDescriptions.insert(description);
 
 		// Ping
@@ -129,7 +135,7 @@ void DroneControl::recordFound(Record record)
 	if (record["Service"]=="DroneTower")
 	{
 		QString description = record["Address"] + ":" + record["Port"];
-		qDebug() << "Found DroneTower:" << description;
+		logInfo(QString("Found DroneTower: %1").arg(description));
 	}
 }
 
@@ -139,7 +145,7 @@ void DroneControl::recordLost(Record record)
 	if (record["Service"]=="DroneFlight" and record["Channel"]==config.value("Channel"))
 	{
 		QString description = record["Address"] + ":" + record["Port"];
-		qDebug() << "Lost DroneFlight:" << description;
+		logInfo(QString("Lost DroneFlight: %1").arg(description));
 		mFlightDescriptions.remove(description);
 
 		emit infoChanged(info());
@@ -147,7 +153,7 @@ void DroneControl::recordLost(Record record)
 	if (record["Service"]=="DroneTower")
 	{
 		QString description = record["Address"] + ":" + record["Port"];
-		qDebug() << "Lost DroneTower:" << description;
+		logInfo(QString("Lost DroneTower: %1").arg(description));
 	}
 }
 
@@ -162,7 +168,7 @@ void DroneControl::gotDatagram(QByteArray datagram, QHostAddress sender, quint16
 		/*if (ping.trips > 0 and ping.trips < 3)
 		{
 			++ping.trips;
-			qDebug() << "Responding to ping #" << ping.id << "from" << sender.toString() << senderPort;
+			debug(QString("Responding to ping # %1 from %2:%3").arg(ping.id).arg(sender.toString()).arg(senderPort));
 			mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), sender, senderPort);
 		}*/
 
@@ -173,7 +179,7 @@ void DroneControl::gotDatagram(QByteArray datagram, QHostAddress sender, quint16
 			{
 				qint64 dt = QDateTime::currentMSecsSinceEpoch() - mPingTimes[ping.id];
 				mPingTimes.remove(ping.id);
-				qDebug() << dt << "ms ping #" << ping.id << "from" << sender.toString() << senderPort;
+				logDebug(QString("%1 ms ping # %2 from %3:%4").arg(dt).arg(ping.id).arg(sender.toString()).arg(senderPort));
 			}
 
 			// TODO Remove old pings
@@ -183,9 +189,9 @@ void DroneControl::gotDatagram(QByteArray datagram, QHostAddress sender, quint16
 			++ping.trips;
 			mDiscover->sendDatagramTo(encodeMessage<Ping>(ping), sender, senderPort);
 		}
-		else qDebug() << "Unexpected ping #" << ping.id << "with" << ping.trips << "trips from" << sender.toString() << senderPort;
+		else logDebug(QString("Unexpected ping # %1 with %2 trips from %3:%4").arg(ping.id).arg(ping.trips).arg(sender.toString()).arg(senderPort));
 	}
-	else qDebug() << "DroneFlight::gotDatagram() of size" << datagram.size() << "from" << sender.toString() << senderPort;
+	else logDebug(QString("Unrecognized datagram of size %1 from %2:%3").arg(datagram.size()).arg(sender.toString()).arg(senderPort));
 }
 
 /*

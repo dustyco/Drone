@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QUdpSocket>
 #include "Record.h"
+#include "Logger.h"
 
 /*
 	Not global server mode:
@@ -25,7 +26,7 @@
 	
 */
 
-class Discover : public QObject
+class Discover : public QObject, public Logger
 {
 	Q_OBJECT
 

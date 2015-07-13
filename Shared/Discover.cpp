@@ -22,6 +22,8 @@ Discover::Discover(QObject *parent, Mode mode, QHostAddress multicastAddress, qu
 	departure = false;
 	defaultScope = "Local";
 
+	setLoggerTag("Discover");
+
 	// Timers
 	timer = new QTimer(this);
 	connect(timer, SIGNAL(timeout()), this, SLOT(announceRecords()));
@@ -45,23 +47,23 @@ Discover::Discover(QObject *parent, Mode mode, QHostAddress multicastAddress, qu
 //	connect(loopbackSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
 //	if (not loopbackSocket->bind(QHostAddress::LocalHost, port, QAbstractSocket::ShareAddress | QAbstractSocket::ReuseAddressHint))
 //	{
-//		qDebug() << "Error binding loopbackSocket:" << loopbackSocket->errorString();
+//		qlogDebug() << "Error binding loopbackSocket:" << loopbackSocket->errorString();
 //	}
 
 	// Global socket
 	globalSocket = new QUdpSocket(this);
 	connect(globalSocket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
-	if (mServerMode) qDebug() << "Discover global server mode on port" << port;
+	if (mServerMode) logDebug(QString("Discover global server mode on port %1").arg(port));
 	if (not globalSocket->bind(QHostAddress::AnyIPv4, mServerMode?port:0))
 	{
-		qDebug() << "Error binding globalSocket:" << globalSocket->errorString();
+		logWarning(QString("Error binding globalSocket: %1").arg(globalSocket->errorString()));
 	}
 
 }
 
 Discover::~Discover()
 {
-	//qDebug() << "Deleting";
+	//logDebug("Running destructor");
 	departure = true;
 	announceRecords();
 	running = false;
@@ -76,7 +78,7 @@ void Discover::addGlobalServerParse (QString globalServer)
 
 void Discover::addGlobalServer (QHostAddress address, quint16 port)
 {
-	if (address.isNull()) qDebug() << "Discover::addGlobalServer(): Bad server address:" << address;
+	if (address.isNull()) logWarning(QString("addGlobalServer(): Bad server address: %1").arg(address.toString()));
 	else globalServers.push_back(QPair<QHostAddress,quint16>(address, port));
 
 	// Announce it immediately after returning to event loop
@@ -98,7 +100,7 @@ void Discover::addRecord (Record record)
 	// These will be announced or given in responses
 	ownedRecords.push_back(record);
 	
-	qDebug() << "Owned record:" << record.toString();
+	logDebug(QString("Owned record: %1").arg(record.toString()));
 	
 	// Announce it immediately after returning to event loop
 	if (running and not mServerMode) timer->start(0);
@@ -128,7 +130,7 @@ bool Discover::start ()
 bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::SendMode sendMode)
 {
 	Q_UNUSED(sendMode); // TODO
-	//qDebug() << "Sending datagram of size" << datagram.size() << "to" << filter.toString();
+	//logDebug(QString("Sending datagram of size %1 to %2").arg(datagram.size()).arg(filter.toString()));
 
 	QList<Record> matchingRecords;
 
@@ -157,7 +159,7 @@ bool Discover::sendDatagramTo (QByteArray datagram, Record filter, Discover::Sen
 		bool ok = false;
 		quint16 port = record["Port"].toInt(&ok);
 
-		//qDebug() << "    Route:" << address.toString() << port;
+		//logDebug(QString("    Route: %1:%2").arg(address.toString()).arg(port));
 		sendDatagramTo(datagram, address, port);
 	}
 	return true;
@@ -226,7 +228,6 @@ void Discover::readDatagrams ()
 		// Normal: Respond to only Local requests with only owned Records
 		if (respond and not mServerMode and (scope=="Local" or scope=="Loopback"))
 		{
-			//qDebug() << "Responding:" << QByteArray("DSDA")+makeDatagram(ownedRecords) << "Address:" << sender.toString() << senderPort;
 			globalSocket->writeDatagram(QByteArray("DSDA")+makeDatagram(ownedRecords, true), sender, senderPort);
 		}
 		// Server: Respond to only global requests with owned and found Records
@@ -268,7 +269,6 @@ void Discover::announceRecords ()
 		// Send to each Global server
 		for (QPair<QHostAddress,quint16> globalServer : globalServers)
 		{
-			//qDebug() << "Sending to" << globalServer;
 			globalSocket->writeDatagram(datagram, globalServer.first, globalServer.second);
 		}
 	}
@@ -305,14 +305,15 @@ void Discover::announceRecords ()
 					// Create the socket if it doesn't exit yet
 					if (not multiSocket.contains(entry.ip().toString()))
 					{
-						qDebug() << "New multicast socket: " << entry.ip().toString() << entry.netmask().toString() << entry.netmask().toIPv4Address();
+						logDebug(QString("New multicast socket: %1 %2").arg(entry.ip().toString(), entry.netmask().toString()));
+
 						// Add it, create and bind the socket
 						QUdpSocket* socket = new QUdpSocket(this);
 						connect(socket, SIGNAL(readyRead()), this, SLOT(readDatagrams()));
 						socket->setSocketOption(QAbstractSocket::MulticastTtlOption, 1);
 						if (not socket->bind(QHostAddress::AnyIPv4, port, QAbstractSocket::ShareAddress | QAbstractSocket::ReuseAddressHint))
 						{
-							qDebug() << "Error binding to iface" << entry.ip().toString() << socket->errorString();
+							logWarning(QString("Error binding to iface %1: %2").arg(entry.ip().toString(), socket->errorString()));
 						}
 						socket->setMulticastInterface(iface);
 						socket->joinMulticastGroup(groupAddress, iface);
@@ -320,7 +321,6 @@ void Discover::announceRecords ()
 					}
 
 					// Send datagram
-					//qDebug() << "Multicasting:" << datagram;
 					multiSocket[entry.ip().toString()]->writeDatagram(datagram, groupAddress, port);
 				}
 			}
@@ -361,7 +361,7 @@ void Discover::expireRecords ()
 		if (delta <= 0)
 		{
 			// It's expired
-			qDebug() << "Lost Record:" << pair.first.toString();
+			logDebug(QString("Lost Record: %1").arg(pair.first.toString()));
 			foundRecords.remove(pair.first);
 
 			// Notify this app
@@ -429,7 +429,7 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 			// See if it's new
 			if (foundRecords.contains(record))
 			{
-				qDebug() << "Record Departed:" << record.toString();
+				logDebug(QString("Record Departed: %1").arg(record.toString()));
 				foundRecords.remove(record);
 				emit recordLost(record);
 			}
@@ -439,7 +439,7 @@ void Discover::acceptRecords (QList<Record> records, bool removeThem, QString se
 			// See if it's new
 			if (not foundRecords.contains(record) and passesFilters(record))
 			{
-				qDebug() << "Found Record:" << record.toString();
+				logDebug(QString("Found Record: %1").arg(record.toString()));
 				emit recordFound(record);
 			}
 
