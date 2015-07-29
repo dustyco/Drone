@@ -53,6 +53,9 @@ DroneControl::DroneControl(QObject* parent) : QObject(parent)
 	//mDiscover->addFilter("Channel", config.value("Channel").toString());
 	mDiscover->addGlobalServer(towerAddress, towerPort);
 	mDiscover->start();
+
+	// Initialize joysticks
+	mJoystick = new Joystick(this);
 }
 
 QString DroneControl::info() const {

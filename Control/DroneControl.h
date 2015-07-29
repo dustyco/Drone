@@ -9,6 +9,7 @@
 #include <../Shared/Messages.h>
 #include <../Shared/Config.h>
 #include <../Shared/Logger.h>
+#include <../Shared/Joystick.h>
 
 class DroneControl : public QObject, public Logger
 {
@@ -46,6 +47,7 @@ private:
 	int mPingCounter;
 	QTimer* mPingTimer;
 	QMap<qint64, qint64> mPingTimes;
+	Joystick* mJoystick;
 };
 
 #endif // DRONECONTROL_H
