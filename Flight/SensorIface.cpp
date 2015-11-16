@@ -1,5 +1,6 @@
 #include "SensorIface.h"
 #include "../Shared/Config.h"
+#include <QTextStream>
 
 SensorIface::SensorIface (QObject* parent, Discover* discover) : QObject(parent)
 {
@@ -73,6 +74,7 @@ void SensorIface::ttyQuery()
 		description = serialPortInfo.description();
 		manufacturer = serialPortInfo.manufacturer();
 		serialNumber = serialPortInfo.serialNumber();
+		QTextStream out(stdout);
 		out << endl
 			<< QObject::tr("        Name: ") << serialPortInfo.portName() << endl
 			<< QObject::tr("    Location: ") << serialPortInfo.systemLocation() << endl
@@ -82,6 +84,7 @@ void SensorIface::ttyQuery()
 			<< QObject::tr("    VendorID: ") << (serialPortInfo.hasVendorIdentifier() ? QByteArray::number(serialPortInfo.vendorIdentifier(), 16) : blankString) << endl
 			<< QObject::tr("   ProductID: ") << (serialPortInfo.hasProductIdentifier() ? QByteArray::number(serialPortInfo.productIdentifier(), 16) : blankString) << endl
 			<< QObject::tr("        Busy: ") << (serialPortInfo.isBusy() ? QObject::tr("Yes") : QObject::tr("No")) << endl;
+
 	}
 }
 
