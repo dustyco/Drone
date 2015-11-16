@@ -8,7 +8,7 @@ echo "====== Binary prefix: $bin_prefix/"
 echo "====== Source prefix: $src_prefix/"
 echo "====== Installing to $out_prefix/"
 
-canonical_name"DroneFlight"
+canonical_name="DroneFlight"
 lowercase_name="drone-flight"
 subfolder="Flight"
 
