@@ -231,17 +231,17 @@ if [ "$package_manager" == "apt-get" ]; then
 #	echo ""                               > "$debdir/copyright"
 
 	# Debian: General info
-	echo "#!/usr/bin/make -f"             > "$debdir/rules"
-	echo "%:"                            >> "$debdir/rules"
-	echo "	dh \$@"                      >> "$debdir/rules"
-	echo ""                              >> "$debdir/rules"
-	echo "override_dh_auto_configure:"   >> "$debdir/rules"
-	echo "	qmake \"$subfolder\""        >> "$debdir/rules"
-	echo ""                              >> "$debdir/rules"
-	echo "override_dh_auto_build:"       >> "$debdir/rules"
-	echo "	make"                        >> "$debdir/rules"
-	echo ""                              >> "$debdir/rules"
-	echo "override_dh_auto_install:"     >> "$debdir/rules"
+	echo "#!/usr/bin/make -f"                      > "$debdir/rules"
+	echo "%:"                                     >> "$debdir/rules"
+	echo "	dh \$@"                               >> "$debdir/rules"
+	echo ""                                       >> "$debdir/rules"
+	echo "override_dh_auto_configure:"            >> "$debdir/rules"
+	echo "	qmake -config release \"$subfolder\"" >> "$debdir/rules"
+	echo ""                                       >> "$debdir/rules"
+	echo "override_dh_auto_build:"                >> "$debdir/rules"
+	echo "	make"                                 >> "$debdir/rules"
+	echo ""                                       >> "$debdir/rules"
+	echo "override_dh_auto_install:"              >> "$debdir/rules"
 	echo "	\"$subfolder/DeployFiles/Install.sh\" \".\"  \".\" \"debian/$pkgname\""     >> "$debdir/rules"
 
 

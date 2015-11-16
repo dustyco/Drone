@@ -28,15 +28,11 @@ pkgver() {
 }
 
 build() {
-  cd "$srcdir/$_pkgname/$_subdir"
-  qmake -config release .
-  make -j2
+  cd "$srcdir/$_pkgname"
+  qmake -config release "$_subdir"
+  make
 }
 
 package() {
-  cd "$srcdir/$_pkgname/$_subdir"
-#  make install PREFIX="$pkgdir/usr" SYSCONFDIR="$pkgdir/etc/local/$_pkgname"
-
-  install -Dm755 "$srcdir/$_pkgname/$_subdir/$_binary" "$pkgdir/usr/bin/$_binary"
-  install -Dm644 "$srcdir/$_pkgname/$_subdir/$_servicefile" "$pkgdir/usr/lib/systemd/system/$_servicefile"
+  "$srcdir/$_pkgname/$_subdir/DeployFiles/Install.sh" "$srcdir/$_pkgname"  "$srcdir/$_pkgname" "$pkgdir"
 }
