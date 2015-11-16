@@ -152,6 +152,9 @@ function clone_repo {
 	echo "Version: $version"
 }
 
+# Clone a copy of the repo
+clone_repo || end "Failed to clone git repo"
+
 ##################################################
 # 2. Install dependencies (subfolder, deployfiles)
 ##################################################
@@ -183,9 +186,6 @@ printf "Install after? [Y/n]: "; read install_response
 [ "$response" == "n" ] || do_install="True"
 
 if [ "$package_manager" == "apt-get" ]; then
-
-	# Clone a copy of the repo
-	clone_repo || end "Failed to clone git repo"
 
 	      pkgname="drone-$(lowercase $subfolder)-git"
 	      pkgdesc="Drone $subfolder runtime"
