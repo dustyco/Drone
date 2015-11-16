@@ -1,0 +1,3 @@
+qt5-core
+qt5-network
+qt5-serialport

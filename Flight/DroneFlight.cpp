@@ -41,6 +41,10 @@ DroneFlight::DroneFlight (QObject *parent) : QObject(parent)
 	//mDiscover->addFilter("Channel", config.value("Channel").toString());
 	mDiscover->addGlobalServer(towerAddress, towerPort);
 	mDiscover->start();
+
+	// Start the sensor interface
+	mSensorIface = new SensorIface(this, mDiscover);
+	mSensorIface->start();
 }
 
 QString DroneFlight::checkConfig()

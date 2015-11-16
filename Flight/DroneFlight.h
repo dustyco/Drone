@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QUdpSocket>
+#include "SensorIface.h"
 #include "../Shared/Discover.h"
 
 class DroneFlight : public QObject
@@ -27,6 +28,7 @@ private:
     Discover* mDiscover;
     QTimer mTimer;
     QUdpSocket* mSocket;
+	SensorIface* mSensorIface;
 };
 
 #endif // DRONEFLIGHT_H
